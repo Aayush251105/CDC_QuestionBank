@@ -38,6 +38,7 @@ model User {
   pinAttempts   PinAttempt[]
   reviewActions ReviewAction[]
   drivesCreated Drive[]        @relation("DriveCreatedBy")
+  roundsCreated Round[]        @relation("RoundCreatedBy")
 }
 
 // ---------- Companies, drives, rounds ----------
@@ -94,6 +95,7 @@ model Drive {
 
   company     Company      @relation(fields: [companyId], references: [id])
   rounds      Round[]
+  submissions Submission[]
   pinAttempts PinAttempt[]
 
   @@unique([companyId, year, sequence])
@@ -119,6 +121,13 @@ model Round {
   durationMin Int?
   sections    String[]
   roles       String[] // only these roles sat this round; empty = every role in the drive
+
+  // A student can add a round the CDC has not listed (S2 "My round is not
+  // listed"). It stays unverified, and hidden from browse pages, until the
+  // CDC checks it.
+  verified    Boolean @default(true)
+  createdById String?
+  createdBy   User?   @relation("RoundCreatedBy", fields: [createdById], references: [id])
 
   drive       Drive                @relation(fields: [driveId], references: [id], onDelete: Cascade)
   questions   Question[]
@@ -166,10 +175,21 @@ enum VerificationTag {
 }
 
 model Submission {
-  id               String           @id @default(cuid())
-  userId           String
-  roundId          String
-  role             String? // the role in the drive the student sat for
+  id      String  @id @default(cuid())
+  userId  String
+  // Chosen in S1 (PIN or "Drive not listed"); the round is picked in S2.
+  driveId String
+  roundId String?
+  role    String? // the role in the drive the student sat for
+
+  // What the student reports about the round in S2 (the CDC compares it
+  // with the round's own details).
+  testDate    DateTime?
+  platform    String?
+  durationMin Int?
+  sections    Json? // [{ name: "Coding", count: 2 }]
+  notes       String?
+
   enteredWithPin   Boolean          @default(false)
   mode             SubmissionMode   @default(FORM)
   status           SubmissionStatus @default(DRAFT)
@@ -184,13 +204,16 @@ model Submission {
   updatedAt        DateTime         @updatedAt
 
   user         User          @relation(fields: [userId], references: [id])
-  round        Round         @relation(fields: [roundId], references: [id])
+  drive        Drive         @relation(fields: [driveId], references: [id])
+  round        Round?        @relation(fields: [roundId], references: [id])
   scanPages    ScanPage[]
   rawQuestions RawQuestion[]
 
   // One submission per round: a second visit opens the existing one.
+  // (Drafts without a round yet do not clash: NULLs are distinct.)
   @@unique([userId, roundId])
   @@index([status])
+  @@index([userId, driveId])
 }
 
 enum ReadStatus {

@@ -27,6 +27,7 @@ export async function getCompanyList(): Promise<CompanyListItem[]> {
         select: {
           year: true,
           rounds: {
+            where: { verified: true },
             select: { date: true, _count: { select: { questions: true } } },
           },
         },

@@ -800,6 +800,7 @@ async function main() {
 
   // Drives and rounds
   const roundId = new Map<string, string>();
+  const driveOfRound = new Map<string, string>();
   const visitsSoFar = new Map<string, number>();
   for (const dr of DRIVES) {
     const visitKey = `${dr.company}-${dr.year}`;
@@ -835,6 +836,7 @@ async function main() {
         },
       });
       roundId.set(r.key, round.id);
+      driveOfRound.set(r.key, drive.id);
     }
   }
 
@@ -1033,6 +1035,7 @@ async function main() {
     const sub = await db.submission.create({
       data: {
         userId: userId.get(s.user)!,
+        driveId: driveOfRound.get(s.round)!,
         roundId: roundId.get(s.round)!,
         enteredWithPin: true,
         status: s.status,
