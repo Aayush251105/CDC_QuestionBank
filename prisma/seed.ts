@@ -757,48 +757,23 @@ const QUESTIONS: QuestionSeed[] = [
 
 // ---------- People ----------
 
-const STUDENTS = [
-  // The signed-in student in every design page (12-Profile)
+// Roll number, branch and batch are left empty until they are known.
+const STUDENTS: {
+  key: string;
+  name: string;
+  email: string;
+  rollNo?: string;
+  branch?: string;
+  gradYear?: number;
+  credit?: boolean;
+}[] = [
+  // Holds the design's sample submissions and bookmarks (10, 11, 12)
+  { key: "aayush", name: "Aayush Gupta", email: "ag967@snu.edu.in" },
   {
-    key: "aarav",
-    name: "Aarav Sharma",
-    email: "as123@snu.edu.in",
-    rollNo: "2210110123",
-    branch: "CSE",
-    gradYear: 2026,
-  },
-  {
-    key: "priya",
-    name: "Priya Nair",
-    email: "pn456@snu.edu.in",
-    rollNo: "2210110456",
-    branch: "CSE",
-    gradYear: 2026,
+    key: "khushi",
+    name: "Khushi Jain",
+    email: "kj934@snu.edu.in",
     credit: true,
-  },
-  {
-    key: "rohan",
-    name: "Rohan Mehta",
-    email: "rm789@snu.edu.in",
-    rollNo: "2210110789",
-    branch: "ECE",
-    gradYear: 2026,
-  },
-  {
-    key: "isha",
-    name: "Isha Verma",
-    email: "iv234@snu.edu.in",
-    rollNo: "2210110234",
-    branch: "CSE",
-    gradYear: 2027,
-  },
-  {
-    key: "kabir",
-    name: "Kabir Singh",
-    email: "ks567@snu.edu.in",
-    rollNo: "2210110567",
-    branch: "Mechanical",
-    gradYear: 2026,
   },
 ];
 
@@ -895,7 +870,6 @@ async function main() {
         name: s.name,
         email: s.email,
         rollNo: s.rollNo,
-        programme: "B.Tech",
         branch: s.branch,
         gradYear: s.gradYear,
         creditByDefault: s.credit ?? false,
@@ -907,7 +881,7 @@ async function main() {
     data: { name: "CDC Admin", email: "cdc.admin@snu.edu.in", role: "ADMIN" },
   });
 
-  // Submissions (10-My-submissions for Aarav; others so "Shared by" counts are real)
+  // Submissions (10-My-submissions for Aayush; Khushi so "Shared by" counts are real)
   type SubSeed = {
     user: string;
     round: string;
@@ -925,7 +899,7 @@ async function main() {
   };
   const SUBMISSIONS: SubSeed[] = [
     {
-      user: "aarav",
+      user: "aayush",
       round: "ms25-oa",
       status: "DRAFT",
       lastStep: "questions",
@@ -943,7 +917,7 @@ async function main() {
       ],
     },
     {
-      user: "aarav",
+      user: "aayush",
       round: "amz25-tech",
       status: "PENDING_REVIEW",
       submittedAt: d(2025, 8, 28),
@@ -961,7 +935,7 @@ async function main() {
       ],
     },
     {
-      user: "aarav",
+      user: "aayush",
       round: "amz25-oa",
       status: "PUBLISHED",
       submittedAt: d(2025, 8, 14),
@@ -988,7 +962,7 @@ async function main() {
       ],
     },
     {
-      user: "aarav",
+      user: "aayush",
       round: "dlt25-apt",
       status: "PUBLISHED",
       submittedAt: d(2025, 7, 26),
@@ -1003,7 +977,7 @@ async function main() {
       ],
     },
     {
-      user: "aarav",
+      user: "aayush",
       round: "inf25-oa",
       status: "NOT_PUBLISHED",
       submittedAt: d(2025, 7, 21),
@@ -1022,7 +996,7 @@ async function main() {
       ],
     },
     {
-      user: "priya",
+      user: "khushi",
       round: "amz25-oa",
       status: "PUBLISHED",
       credit: true,
@@ -1038,35 +1012,7 @@ async function main() {
       ],
     },
     {
-      user: "rohan",
-      round: "amz25-oa",
-      status: "PUBLISHED",
-      submittedAt: d(2025, 8, 15),
-      reviewedAt: d(2025, 8, 20),
-      raw: [
-        {
-          type: "CODING",
-          title: "Longest substring with k distinct",
-          text: "longest substring with at most k distinct characters",
-          publishedAs: "q-longest-k",
-        },
-      ],
-    },
-    {
-      user: "isha",
-      round: "amz25-oa",
-      status: "PENDING_REVIEW",
-      submittedAt: d(2025, 8, 16),
-      raw: [
-        {
-          type: "MCQ",
-          title: "Work style survey question",
-          text: "teammate misses deadline, what do you do",
-        },
-      ],
-    },
-    {
-      user: "kabir",
+      user: "khushi",
       round: "lt24-oa",
       status: "PUBLISHED",
       submittedAt: d(2024, 12, 4),
@@ -1124,10 +1070,10 @@ async function main() {
   }
 
   // Bookmarks (11-Bookmarks, followed companies on 02-Home and 03-Companies)
-  const aarav = userId.get("aarav")!;
+  const aayush = userId.get("aayush")!;
   for (const name of ["Amazon", "Microsoft", "Deloitte", "Goldman Sachs"]) {
     await db.bookmark.create({
-      data: { userId: aarav, companyId: companyId.get(name)! },
+      data: { userId: aayush, companyId: companyId.get(name)! },
     });
   }
   for (const key of [
@@ -1138,14 +1084,14 @@ async function main() {
     "q-islands",
   ]) {
     await db.bookmark.create({
-      data: { userId: aarav, questionId: questionId.get(key)! },
+      data: { userId: aayush, questionId: questionId.get(key)! },
     });
   }
 
   // One unread notification ("Notifications (1)"). Neutral: no outcome (2a.2).
   await db.notification.create({
     data: {
-      userId: aarav,
+      userId: aayush,
       kind: "SUBMISSION_REVIEWED",
       link: "/me/submissions",
     },
