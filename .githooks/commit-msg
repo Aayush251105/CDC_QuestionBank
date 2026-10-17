@@ -1,0 +1,6 @@
+#!/bin/sh
+# Rejects any commit message that would credit Claude as a contributor.
+if grep -qiE '^co-authored-by:.*(claude|anthropic)|generated with \[?claude code|noreply@anthropic\.com|claude\.ai/code' "$1"; then
+  echo "commit-msg: Claude attribution found in the commit message. Remove it and commit again." >&2
+  exit 1
+fi

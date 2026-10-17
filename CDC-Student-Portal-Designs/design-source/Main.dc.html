@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Student portal page map</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+*{box-sizing:border-box}
+a{color:#CD1739}a:hover{color:#A51230}
+:focus-visible{outline:2px solid #2B2B2B;outline-offset:3px}
+.eyebrow{margin:0;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#CD1739}
+.row a{text-decoration:none;font-weight:700}
+</style>
+</helmet>
+<div style="font-family: 'DM Sans', sans-serif; color: #2B2B2B; background: #FFFFFF; min-height: 100vh; font-size: 16px; line-height: 1.55">
+  <div style="border-top: 6px solid #CD1739"></div>
+  <div style="max-width: 1100px; margin: 0 auto; padding: 56px 24px 72px; display: flex; flex-direction: column; gap: 56px">
+
+    <header style="display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #E3E3E3; padding-bottom: 32px">
+      <p class="eyebrow">CDC Placement Question Bank · Student portal v2</p>
+      <h1 style="margin: 0; font-size: 44px; line-height: 1.12; font-weight: 700; letter-spacing: -0.01em">Page map and navigation</h1>
+      <p style="margin: 0; max-width: 760px; font-size: 18px; font-weight: 300; color: #4A4A49">Twenty screens, styled after snu.edu.in: DM Sans, charcoal text, SNU crimson for actions, square edges and plain white space. The submission flow now has its own pages and a workflow board next to this one.</p>
+    </header>
+
+    <section aria-labelledby="p-h" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <p class="eyebrow">01</p>
+        <h2 id="p-h" style="margin: 0; font-size: 28px; font-weight: 700">Pages</h2>
+      </div>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 15px; min-width: 720px">
+          <thead>
+            <tr style="text-align: left; border-bottom: 2px solid #2B2B2B">
+              <th scope="col" style="padding: 10px 12px 10px 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; width: 60px">No.</th>
+              <th scope="col" style="padding: 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; width: 230px">Page</th>
+              <th scope="col" style="padding: 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; width: 260px">Route</th>
+              <th scope="col" style="padding: 10px 0 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase">Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{pages}}" as="p" hint-placeholder-count="20">
+              <tr class="row" style="border-bottom: 1px solid #E3E3E3; vertical-align: top">
+                <td style="padding: 12px 12px 12px 0; color: #6B6B6A; font-weight: 500">{{p.num}}</td>
+                <td style="padding: 12px"><a href="{{p.file}}">{{p.name}}</a></td>
+                <td style="padding: 12px; font-family: ui-monospace, monospace; font-size: 13px; color: #4A4A49">{{p.route}}</td>
+                <td style="padding: 12px 0 12px 12px; color: #4A4A49">{{p.purpose}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="n-h" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <p class="eyebrow">02</p>
+        <h2 id="n-h" style="margin: 0; font-size: 28px; font-weight: 700">Navigation</h2>
+        <p style="margin: 0; color: #4A4A49">The header copies the SNU site: a thin charcoal strip on top, then a white bar with the wordmark, an amber divider and bold nav links that turn crimson with an underline when active. "Submit OA" sits at the end as a solid crimson button, the way "Apply Now" does on snu.edu.in.</p>
+      </div>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border-top: 1px solid #E3E3E3">
+        <li style="padding: 14px 0; border-bottom: 1px solid #E3E3E3"><strong>Top strip.</strong> Help, notifications and your name. Kept out of the main nav so it stays short.</li>
+        <li style="padding: 14px 0; border-bottom: 1px solid #E3E3E3"><strong>Breadcrumbs</strong> on every page below a company, so you can step back one level.</li>
+        <li style="padding: 14px 0; border-bottom: 1px solid #E3E3E3"><strong>Back keeps your place.</strong> Filters, year tab and scroll position come back. Filters live in the URL so a search can be shared.</li>
+        <li style="padding: 14px 0; border-bottom: 1px solid #E3E3E3"><strong>Phones.</strong> Nav links wrap under the wordmark; every page becomes one column; touch targets are at least 44 px.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="f-h" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <p class="eyebrow">03</p>
+        <h2 id="f-h" style="margin: 0; font-size: 28px; font-weight: 700">Main flows</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0; border-top: 2px solid #2B2B2B">
+        <sc-for list="{{flows}}" as="f" hint-placeholder-count="4">
+          <div style="padding: 20px 20px 20px 0; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid #E3E3E3">
+            <span style="font-size: 40px; font-weight: 700; line-height: 1; color: #CD1739">{{f.letter}}</span>
+            <strong style="font-size: 18px">{{f.title}}</strong>
+            <ol style="margin: 0; padding-left: 18px; color: #4A4A49; font-size: 15px; display: flex; flex-direction: column; gap: 4px">
+              <sc-for list="{{f.steps}}" as="s" hint-placeholder-count="4">
+                <li><a href="{{s.file}}">{{s.label}}</a></li>
+              </sc-for>
+            </ol>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; color: #4A4A49">Flow D, submitting an OA, is laid out step by step on the <a href="SubmitWorkflow.dc.html" style="font-weight: 700">submission workflow board</a>.</p>
+    </section>
+
+    <section aria-labelledby="t-h" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <p class="eyebrow">04</p>
+        <h2 id="t-h" style="margin: 0; font-size: 28px; font-weight: 700">Transitions</h2>
+        <p style="margin: 0; color: #4A4A49">Plain and quick, like the SNU site. Nothing slides in from the side. Motion is turned off for anyone with "reduce motion" set.</p>
+      </div>
+      <dl style="margin: 0; display: flex; flex-direction: column; border-top: 1px solid #E3E3E3">
+        <sc-for list="{{transitions}}" as="t" hint-placeholder-count="7">
+          <div style="display: grid; grid-template-columns: 170px 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid #E3E3E3; font-size: 15px">
+            <dt style="font-weight: 700">{{t.what}}</dt>
+            <dd style="margin: 0; color: #4A4A49">{{t.how}}</dd>
+          </div>
+        </sc-for>
+      </dl>
+    </section>
+
+    <section aria-labelledby="l-h" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <p class="eyebrow">05</p>
+        <h2 id="l-h" style="margin: 0; font-size: 28px; font-weight: 700">Colours and type, taken from snu.edu.in</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px">
+        <sc-for list="{{swatches}}" as="s" hint-placeholder-count="7">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <span style="display: block; height: 72px; background: {{s.hex}}; border: 1px solid #E3E3E3"></span>
+            <strong style="font-size: 14px">{{s.name}}</strong>
+            <span style="font-size: 13px; color: #4A4A49">{{s.hex}} · {{s.use}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; color: #4A4A49; font-size: 15px">DM Sans throughout (the site's only typeface), bold for headings and nav, light for long text. Square corners on buttons, fields and boxes; hairline borders instead of shadows; small uppercase crimson labels above section headings.</p>
+    </section>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const p = (num, name, route, file, purpose) => ({ num, name, route, file, purpose });
+    const pages = [
+      p('01', 'Sign in', '/login', 'Login.dc.html', 'One "Sign in with Microsoft" button. Turns away non-SNU accounts.'),
+      p('02', 'Home', '/', 'Home.dc.html', 'Search, companies visiting soon, your followed companies, recently added questions.'),
+      p('03', 'Companies', '/companies', 'Companies.dc.html', 'A to Z table with sector, year and role filters.'),
+      p('04', 'Company detail', '/companies/[slug]', 'CompanyDetail.dc.html', 'Drive overview, then a tab per year listing each round.'),
+      p('05', 'Round detail', '/companies/[slug]/[year]/[round]', 'RoundDetail.dc.html', 'Round format, then numbered questions that expand in place.'),
+      p('06', 'Question detail', '/questions/[id]', 'QuestionDetail.dc.html', 'Full question, where else it was asked, similar questions.'),
+      p('07', 'Search', '/search', 'Search.dc.html', 'Full-text results with filters.'),
+      p('08', 'Topics', '/topics', 'Topics.dc.html', 'Browse by skill; a topic opens Search filtered to it.'),
+      p('S1', 'Submit: choose drive', '/submit', 'SubmitStart.dc.html', 'Pick the company and drive, or ask the CDC to add one.'),
+      p('S2', 'Submit: round details', '/submit/[id]/round', 'SubmitRound.dc.html', 'Round type, date, platform, duration, sections.'),
+      p('S3a', 'Submit: type questions', '/submit/[id]/questions', 'SubmitType.dc.html', 'Question editor with fields per type (coding, MCQ, aptitude, SQL, written).'),
+      p('S3b', 'Submit: upload scans', '/submit/[id]/upload', 'SubmitUpload.dc.html', 'Photos or PDF, read page by page; images are deleted after reading.'),
+      p('S4', 'Submit: review', '/submit/[id]/review', 'SubmitReview.dc.html', 'Your text beside the cleaned version; confirm and submit.'),
+      p('S5', 'Submitted', '/submit/[id]/done', 'SubmitDone.dc.html', 'Confirmation and what happens next.'),
+      p('S6', 'Submission status', '/me/submissions/[id]', 'SubmissionDetail.dc.html', 'Status timeline, the questions sent, edit or withdraw while pending.'),
+      p('10', 'My submissions', '/me/submissions', 'MySubmissions.dc.html', 'All your submissions and their status.'),
+      p('11', 'Bookmarks', '/me/bookmarks', 'Bookmarks.dc.html', 'Followed companies and saved questions.'),
+      p('12', 'Profile', '/me', 'Profile.dc.html', 'Details from SSO and the roster, emails, credit setting, sign out.'),
+      p('13', 'Help and FAQ', '/help', 'Help.dc.html', 'How submitting works, privacy, honour code, contact.'),
+      p('14', 'Not found, access denied', '404 · 403', 'System.dc.html', 'Error pages with a way back.')
+    ];
+    const s = (label, file) => ({ label, file });
+    const flows = [
+      { letter: 'A', title: 'First visit', steps: [s('Sign in with Microsoft', 'Login.dc.html'), s('Home', 'Home.dc.html')] },
+      { letter: 'B', title: 'Prepare for a company', steps: [s('Companies', 'Companies.dc.html'), s('Company, pick a year', 'CompanyDetail.dc.html'), s('Round, read questions', 'RoundDetail.dc.html'), s('Question page', 'QuestionDetail.dc.html')] },
+      { letter: 'C', title: 'Practise a skill', steps: [s('Topics or Search', 'Topics.dc.html'), s('Filtered results', 'Search.dc.html'), s('Question page', 'QuestionDetail.dc.html')] },
+      { letter: 'D', title: 'Share an OA', steps: [s('Choose drive', 'SubmitStart.dc.html'), s('Round details', 'SubmitRound.dc.html'), s('Type or upload', 'SubmitType.dc.html'), s('Review and submit', 'SubmitReview.dc.html'), s('Track status', 'SubmissionDetail.dc.html')] }
+    ];
+    const transitions = [
+      { what: 'Page to page', how: 'Normal page load. A 2 px crimson bar at the very top only if loading takes over 300 ms.' },
+      { what: 'Lists loading', how: 'Grey placeholder rows in the shape of the content.' },
+      { what: 'Question rows', how: 'Expand in place in 150 ms; the plus turns into a minus, as on the SNU accordions.' },
+      { what: 'Tabs and filters', how: 'Swap the list instantly; the result count updates.' },
+      { what: 'Submit steps', how: 'Each step is its own page; the step bar fills in crimson. Back keeps what you typed.' },
+      { what: 'Reading scans', how: 'Each page shows "Reading", then "Done" with a bar, then the text appears for review.' },
+      { what: 'Saving', how: 'A short message at the bottom ("Saved to bookmarks", Undo) that fades after 4 s.' }
+    ];
+    const swatches = [
+      { name: 'SNU crimson', hex: '#CD1739', use: 'buttons, active nav, labels' },
+      { name: 'Crimson dark', hex: '#A51230', use: 'hover' },
+      { name: 'Charcoal', hex: '#2B2B2B', use: 'text, top strip, footer' },
+      { name: 'Amber', hex: '#FFA700', use: 'logo divider, small accents' },
+      { name: 'Peach', hex: '#FEE8CD', use: 'highlight panels' },
+      { name: 'Cream', hex: '#F4E6CD', use: 'text on charcoal' },
+      { name: 'Light grey', hex: '#F7F7F7', use: 'section backgrounds' }
+    ];
+    return { pages, flows, transitions, swatches };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-16T07:40:00Z"},
+  "title": "CDC Student Portal v2",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1280, "h": 2000, "title": "00 · Page map and navigation", "expand": "fill", "is_interactive": true},
+    "SubmitWorkflow.dc.html": {"x": 1360, "y": 0, "w": 1280, "h": 2000, "title": "00 · Submission workflow", "expand": "fill", "is_interactive": true},
+
+    "Login.dc.html": {"x": 0, "y": 2420, "w": 1280, "h": 900, "title": "01 · Sign in", "expand": "fill", "is_interactive": true},
+    "Home.dc.html": {"x": 1360, "y": 2420, "w": 1280, "h": 1700, "title": "02 · Home", "expand": "fill", "is_interactive": true},
+    "Companies.dc.html": {"x": 2720, "y": 2420, "w": 1280, "h": 1500, "title": "03 · Companies", "expand": "fill", "is_interactive": true},
+    "CompanyDetail.dc.html": {"x": 4080, "y": 2420, "w": 1280, "h": 1600, "title": "04 · Company detail", "expand": "fill", "is_interactive": true},
+
+    "RoundDetail.dc.html": {"x": 0, "y": 4540, "w": 1280, "h": 1800, "title": "05 · Round detail", "expand": "fill", "is_interactive": true},
+    "QuestionDetail.dc.html": {"x": 1360, "y": 4540, "w": 1280, "h": 1500, "title": "06 · Question detail", "expand": "fill", "is_interactive": true},
+    "Search.dc.html": {"x": 2720, "y": 4540, "w": 1280, "h": 1500, "title": "07 · Search", "expand": "fill", "is_interactive": true},
+    "Topics.dc.html": {"x": 4080, "y": 4540, "w": 1280, "h": 1400, "title": "08 · Topics", "expand": "fill", "is_interactive": true},
+
+    "SubmitStart.dc.html": {"x": 0, "y": 6760, "w": 1280, "h": 1400, "title": "S1 · Submit: choose drive", "expand": "fill", "is_interactive": true},
+    "SubmitRound.dc.html": {"x": 1360, "y": 6760, "w": 1280, "h": 1300, "title": "S2 · Submit: round details", "expand": "fill", "is_interactive": true},
+    "SubmitType.dc.html": {"x": 2720, "y": 6760, "w": 1280, "h": 1800, "title": "S3a · Submit: type questions", "expand": "fill", "is_interactive": true},
+    "SubmitUpload.dc.html": {"x": 4080, "y": 6760, "w": 1280, "h": 1500, "title": "S3b · Submit: upload scans", "expand": "fill", "is_interactive": true},
+
+    "SubmitReview.dc.html": {"x": 0, "y": 8980, "w": 1280, "h": 1700, "title": "S4 · Submit: review and confirm", "expand": "fill", "is_interactive": true},
+    "SubmitDone.dc.html": {"x": 1360, "y": 8980, "w": 1280, "h": 1200, "title": "S5 · Submitted", "expand": "fill", "is_interactive": true},
+    "SubmissionDetail.dc.html": {"x": 2720, "y": 8980, "w": 1280, "h": 1500, "title": "S6 · Submission status", "expand": "fill", "is_interactive": true},
+    "MySubmissions.dc.html": {"x": 4080, "y": 8980, "w": 1280, "h": 1300, "title": "10 · My submissions", "expand": "fill", "is_interactive": true},
+
+    "Bookmarks.dc.html": {"x": 0, "y": 11100, "w": 1280, "h": 1100, "title": "11 · Bookmarks", "expand": "fill", "is_interactive": true},
+    "Profile.dc.html": {"x": 1360, "y": 11100, "w": 1280, "h": 1200, "title": "12 · Profile", "expand": "fill", "is_interactive": true},
+    "Help.dc.html": {"x": 2720, "y": 11100, "w": 1280, "h": 1400, "title": "13 · Help and FAQ", "expand": "fill", "is_interactive": true},
+    "System.dc.html": {"x": 4080, "y": 11100, "w": 1280, "h": 1000, "title": "14 · Not found, access denied", "expand": "fill", "is_interactive": true}
+  },
+  "order": [
+    "Main.dc.html", "SubmitWorkflow.dc.html",
+    "Login.dc.html", "Home.dc.html", "Companies.dc.html", "CompanyDetail.dc.html",
+    "RoundDetail.dc.html", "QuestionDetail.dc.html", "Search.dc.html", "Topics.dc.html",
+    "SubmitStart.dc.html", "SubmitRound.dc.html", "SubmitType.dc.html", "SubmitUpload.dc.html",
+    "SubmitReview.dc.html", "SubmitDone.dc.html", "SubmissionDetail.dc.html", "MySubmissions.dc.html",
+    "Bookmarks.dc.html", "Profile.dc.html", "Help.dc.html", "System.dc.html"
+  ],
+  "notes": {
+    "t0": {"x": 0, "y": -300, "text": "Student portal v2: map and submission workflow", "kind": "title1", "maxW": 2640},
+    "t1": {"x": 0, "y": 2120, "text": "Sign in and browse by company", "kind": "title1", "maxW": 5360},
+    "t2": {"x": 0, "y": 4240, "text": "Read questions, search, topics", "kind": "title1", "maxW": 5360},
+    "t3": {"x": 0, "y": 6460, "text": "Submission flow: steps 1 to 3", "kind": "title1", "maxW": 5360},
+    "t4": {"x": 0, "y": 8680, "text": "Submission flow: review, status, history", "kind": "title1", "maxW": 5360},
+    "t5": {"x": 0, "y": 10800, "text": "Personal and support pages", "kind": "title1", "maxW": 5360}
+  },
+  "designSystems": []
+}

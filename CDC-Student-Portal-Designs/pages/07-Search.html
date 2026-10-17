@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>07 · Search · CDC Student Portal</title>
+<script src="support.js"></script>
+</head>
+<body>
+<template id="dc-src">
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+*{box-sizing:border-box}
+a{color:#CD1739}a:hover{color:#A51230}
+:focus-visible{outline:2px solid #2B2B2B;outline-offset:3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1180px;margin:0 auto;padding-left:24px;padding-right:24px}
+.top{background:#2B2B2B;color:#F4E6CD;font-size:13px}
+.top a{color:#F4E6CD;text-decoration:none}.top a:hover{color:#FFFFFF;text-decoration:underline}
+.hdr{background:#FFFFFF;border-bottom:1px solid #E3E3E3}
+.nav a{color:#2B2B2B;text-decoration:none;font-weight:700;font-size:15px;padding:24px 0 22px;border-bottom:2px solid transparent}
+.nav a:hover,.nav a[aria-current="page"]{color:#CD1739;border-bottom-color:#CD1739}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;background:#CD1739;color:#FFFFFF;border:1px solid #CD1739;font:inherit;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer}
+.btn:hover{background:#A51230;border-color:#A51230;color:#FFFFFF}
+.nav a.btn{padding:0 22px;border-bottom:1px solid #CD1739;color:#FFFFFF}
+.nav a.btn:hover{border-bottom-color:#A51230;color:#FFFFFF}
+.btn2{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;background:transparent;color:#2B2B2B;border:1px solid #2B2B2B;font:inherit;font-weight:700;font-size:15px;text-decoration:none;cursor:pointer}
+.btn2:hover{background:#2B2B2B;color:#FFFFFF}
+.eyebrow{margin:0;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#CD1739}
+.field{width:100%;min-height:48px;padding:0 14px;border:1px solid #8C8C8B;background:#FFFFFF;font:inherit;font-size:16px;color:#2B2B2B;border-radius:0}
+.field:focus{border-color:#2B2B2B;outline:none;box-shadow:0 0 0 1px #2B2B2B}
+.lbl{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.chk{display:flex;align-items:center;gap:10px;min-height:38px;font-size:15px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:#CD1739;border-radius:0}
+.res{display:flex;flex-direction:column;gap:6px;padding:22px 0;border-bottom:1px solid #E3E3E3;text-decoration:none;color:#2B2B2B}
+.res:hover .rt{color:#CD1739}
+mark{background:#FEE8CD;color:#2B2B2B;padding:0 2px}
+.ftr{background:#2B2B2B;color:#F4E6CD}
+.ftr a{color:#FFFFFF;text-decoration:none}.ftr a:hover{text-decoration:underline}
+</style>
+</helmet>
+<div style="font-family: 'DM Sans', sans-serif; color: #2B2B2B; background: #FFFFFF; min-height: 100vh; font-size: 16px; line-height: 1.55; display: flex; flex-direction: column">
+
+  <div class="top"><div class="wrap" style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 20px; padding-top: 8px; padding-bottom: 8px"><span>Career Development Centre · Shiv Nadar Institution of Eminence</span><span style="display: flex; gap: 20px"><a href="13-Help-and-FAQ.html">Help</a><a href="10-My-submissions.html">Notifications (1)</a><a href="12-Profile.html">Aarav Sharma</a></span></div></div>
+  <header class="hdr"><div class="wrap" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 32px">
+    <a href="02-Home.html" style="display: flex; align-items: center; gap: 14px; padding: 14px 0; text-decoration: none; color: #2B2B2B">
+      <span style="display: flex; flex-direction: column; line-height: 1.05; text-transform: uppercase; font-weight: 700; font-size: 17px; letter-spacing: .04em">Shiv Nadar<span style="font-size: 10px; font-weight: 500; letter-spacing: .26em; margin-top: 3px">University</span></span>
+      <span aria-hidden="true" style="width: 2px; height: 44px; background: #FFA700"></span>
+      <span style="display: flex; flex-direction: column; line-height: 1.25"><span style="font-weight: 700; font-size: 16px">Placement Question Bank</span><span style="font-size: 13px; color: #5F5F5E">Career Development Centre</span></span>
+    </a>
+    <nav class="nav" aria-label="Main" style="display: flex; flex-wrap: wrap; align-items: center; gap: 0 28px">
+      <a href="03-Companies.html">Companies</a>
+      <a href="08-Topics.html">Topics</a>
+      <a href="07-Search.html" aria-current="page">Search</a>
+      <a href="11-Bookmarks.html">Bookmarks</a>
+      <a href="10-My-submissions.html">My submissions</a>
+      <a class="btn" href="S1-Submit-choose-drive.html">Submit OA</a>
+    </nav>
+  </div></header>
+
+  <main style="flex: 1 1 auto">
+    <section style="background: #F7F7F7; border-bottom: 1px solid #E3E3E3">
+      <div class="wrap" style="padding-top: 40px; padding-bottom: 36px; display: flex; flex-direction: column; gap: 14px">
+        <p class="eyebrow">Search the question bank</p>
+        <div role="search" style="display: flex; flex-wrap: wrap; max-width: 820px">
+          <label for="q" class="sr">Search</label>
+          <input id="q" class="field" type="search" value="sliding window" style="flex: 1 1 320px; width: auto; min-height: 56px; font-size: 20px">
+          <a class="btn" href="07-Search.html" style="min-height: 56px; padding: 0 30px">Search</a>
+        </div>
+        <p aria-live="polite" style="margin: 0; color: #4A4A49">{{countText}}</p>
+      </div>
+    </section>
+
+    <div class="wrap" style="display: flex; flex-wrap: wrap; gap: 48px; padding-top: 36px; padding-bottom: 64px">
+      <aside aria-label="Filters" style="flex: 1 1 240px; display: flex; flex-direction: column; gap: 26px">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2B2B2B; padding-bottom: 10px">
+          <h2 style="margin: 0; font-size: 18px; font-weight: 700">Filter results</h2>
+          <button type="button" onClick="{{clear}}" style="min-height: 36px; border: none; background: none; color: #CD1739; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer">Clear all</button>
+        </div>
+        <fieldset style="margin: 0; padding: 0; border: none">
+          <legend class="lbl" style="margin-bottom: 8px">Question type</legend>
+          <template data-sc-for list="{{types}}" as="t" hint-placeholder-count="5">
+            <label class="chk"><input type="checkbox" checked="{{t.on}}" onChange="{{t.toggle}}"><span style="flex: 1">{{t.label}}</span><span style="font-size: 13px; color: #5F5F5E">{{t.n}}</span></label>
+          </template>
+        </fieldset>
+        <div style="display: flex; flex-direction: column; gap: 6px"><label for="f-co" class="lbl">Company</label><select id="f-co" class="field"><option>Any company</option><option>Amazon</option><option>Microsoft</option></select></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><label for="f-yr" class="lbl">Year</label><select id="f-yr" class="field"><option>Any year</option><option>2025</option><option>2024</option></select></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><label for="f-rd" class="lbl">Round</label><select id="f-rd" class="field"><option>Any round</option><option>Online assessment</option><option>Technical interview</option><option>HR</option></select></div>
+        <fieldset style="margin: 0; padding: 0; border: none">
+          <legend class="lbl" style="margin-bottom: 8px">Difficulty</legend>
+          <label class="chk"><input type="checkbox">Easy</label>
+          <label class="chk"><input type="checkbox">Medium</label>
+          <label class="chk"><input type="checkbox">Hard</label>
+        </fieldset>
+      </aside>
+
+      <section aria-label="Results" style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column">
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; border-bottom: 2px solid #2B2B2B; padding-bottom: 10px">
+          <label for="sort" class="lbl">Sort</label>
+          <select id="sort" class="field" style="width: auto; min-height: 40px; font-size: 15px"><option>Best match</option><option>Newest</option><option>Most asked</option></select>
+        </div>
+        <template data-sc-for list="{{results}}" as="r" hint-placeholder-count="5">
+          <a class="res" href="06-Question-detail.html">
+            <span style="font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #CD1739">{{r.type}} · {{r.diff}}</span>
+            <span class="rt" style="font-weight: 700; font-size: 19px; line-height: 1.35">{{r.title}}</span>
+            <span style="font-size: 15px; color: #4A4A49">…{{r.pre}}<mark>{{r.hit}}</mark>{{r.post}}…</span>
+            <span style="font-size: 14px; color: #5F5F5E">{{r.where}}</span>
+          </a>
+        </template>
+        <template data-sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 40px 0; display: flex; flex-direction: column; gap: 8px">
+            <strong style="font-size: 20px">No questions match these filters</strong>
+            <span style="color: #4A4A49">Remove a filter, or <a href="08-Topics.html" style="font-weight: 700">browse by topic</a>.</span>
+          </div>
+        </template>
+        <button type="button" class="btn2" style="align-self: center; margin-top: 28px">Show more results</button>
+      </section>
+    </div>
+  </main>
+
+  <footer class="ftr">
+    <div class="wrap" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 32px; padding-top: 44px; padding-bottom: 36px">
+      <div style="flex: 1 1 320px; max-width: 420px; display: flex; flex-direction: column; gap: 12px">
+        <span style="color: #FFFFFF; font-weight: 700; font-size: 15px; letter-spacing: .08em; text-transform: uppercase">Career Development Centre</span>
+        <span style="font-size: 14px; font-weight: 300; line-height: 1.7">Shiv Nadar Institution of Eminence, Delhi NCR. Questions are shared by students who sat the test and checked by the CDC. For SNU students only.</span>
+      </div>
+      <nav aria-label="Footer" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 48px; font-size: 14px; font-weight: 500">
+        <a href="03-Companies.html">Companies</a><a href="13-Help-and-FAQ.html">Help and FAQ</a><a href="S1-Submit-choose-drive.html">Submit an OA</a><a href="13-Help-and-FAQ.html">Honour code</a><a href="10-My-submissions.html">My submissions</a><a href="13-Help-and-FAQ.html">Contact the CDC</a>
+      </nav>
+    </div>
+    <div style="border-top: 1px solid rgb(255 255 255 / 40%)"><div class="wrap" style="padding-top: 14px; padding-bottom: 14px; font-size: 13px">© Career Development Centre, Shiv Nadar IoE</div></div>
+  </footer>
+</div>
+</template>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { off: {} }; }
+  renderVals() {
+    const all = [
+      { title: 'Longest substring with at most K distinct characters', type: 'Coding', diff: 'Medium', where: 'Amazon 2025 OA · Microsoft 2024 OA', pre: 'use a ', hit: 'sliding window', post: ' and a count of each character inside it' },
+      { title: 'Maximum sum of any subarray of size K', type: 'Coding', diff: 'Easy', where: 'TCS 2025 OA', pre: 'a fixed-size ', hit: 'sliding window', post: ' of length k moves across the array' },
+      { title: 'Smallest window containing all characters of a pattern', type: 'Coding', diff: 'Hard', where: 'Goldman Sachs 2024 OA', pre: 'find the minimum ', hit: 'window', post: ' in s that contains every character of t' },
+      { title: 'Which technique solves the subarray problem in O(n)?', type: 'MCQ', diff: 'Easy', where: 'Samsung R&D 2025 OA', pre: 'A. Brute force  B. ', hit: 'Sliding window', post: '  C. Recursion  D. Sorting' },
+      { title: 'Rolling 7-day average of orders per customer', type: 'SQL', diff: 'Medium', where: 'ZS Associates 2025 OA', pre: 'use a ', hit: 'window', post: ' function with ROWS BETWEEN 6 PRECEDING AND CURRENT ROW' }
+    ];
+    const off = this.state.off;
+    const types = ['Coding', 'MCQ', 'SQL', 'Aptitude', 'Written'].map((label) => ({ label, n: all.filter((r) => r.type === label).length, on: !off[label],
+      toggle: () => this.setState({ off: { ...off, [label]: !off[label] } }) }));
+    const results = all.filter((r) => !off[r.type]);
+    return { types, results, empty: results.length === 0, countText: results.length + ' questions from 6 companies match “sliding window”', clear: () => this.setState({ off: {} }) };
+  }
+}
+</script>
+</body>
+</html>

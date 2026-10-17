@@ -1,0 +1,6 @@
+CDC-Student-Portal-Designs/
+pnpm-lock.yaml
+.next/
+node_modules/
+*.md
+pnpm-workspace.yaml

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>00b · Submission workflow · CDC Student Portal</title>
+<script src="support.js"></script>
+</head>
+<body>
+<template id="dc-src">
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#FFFFFF}
+*{box-sizing:border-box}
+a{color:#CD1739}a:hover{color:#A51230}
+:focus-visible{outline:2px solid #2B2B2B;outline-offset:3px}
+.eyebrow{margin:0;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#CD1739}
+.st{display:inline-block;padding:4px 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+</style>
+</helmet>
+<div style="font-family: 'DM Sans', sans-serif; color: #2B2B2B; background: #FFFFFF; min-height: 100vh; font-size: 16px; line-height: 1.55">
+  <div style="border-top: 6px solid #CD1739"></div>
+  <div style="max-width: 1100px; margin: 0 auto; padding: 56px 24px 72px; display: flex; flex-direction: column; gap: 56px">
+
+    <header style="display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #E3E3E3; padding-bottom: 32px">
+      <p class="eyebrow">Flow D · Sharing an online assessment</p>
+      <h1 style="margin: 0; font-size: 44px; line-height: 1.12; font-weight: 700; letter-spacing: -0.01em">Submission workflow</h1>
+      <p style="margin: 0; max-width: 760px; font-size: 18px; font-weight: 300; color: #4A4A49">Four short steps for the student, then the CDC reviews each drive as one batch. The student always sees where their submission is, but never why one was turned down.</p>
+    </header>
+
+    <section aria-labelledby="lane-h" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <p class="eyebrow">01</p>
+        <h2 id="lane-h" style="margin: 0; font-size: 28px; font-weight: 700">Who does what, step by step</h2>
+      </div>
+      <div style="overflow-x: auto; border: 1px solid #E3E3E3">
+        <div style="min-width: 980px; display: grid; grid-template-columns: 120px repeat(6, minmax(0, 1fr))">
+          <div style="padding: 14px; background: #2B2B2B"></div>
+          <template data-sc-for list="{{stages}}" as="s" hint-placeholder-count="6">
+            <a href="{{s.file}}" style="padding: 14px; background: #2B2B2B; color: #FFFFFF; text-decoration: none; display: flex; flex-direction: column; gap: 2px; border-left: 1px solid #4A4A49">
+              <span style="font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #FFA700">{{s.num}}</span>
+              <span style="font-weight: 700; font-size: 15px; line-height: 1.3">{{s.title}}</span>
+            </a>
+          </template>
+          <template data-sc-for list="{{lanes}}" as="l" hint-placeholder-count="3">
+            <div style="padding: 14px; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border-top: 1px solid #E3E3E3; background: #F7F7F7">{{l.name}}</div>
+            <template data-sc-for list="{{l.cells}}" as="c" hint-placeholder-count="6">
+              <div style="padding: 14px; font-size: 14px; color: #3A3A39; border-top: 1px solid #E3E3E3; border-left: 1px solid #E3E3E3; background: {{c.bg}}">{{c.text}}</div>
+            </template>
+          </template>
+        </div>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: #4A4A49">Click a step heading to open its page. Steps 1 to 4 autosave, so a student can stop and resume from My submissions.</p>
+    </section>
+
+    <section aria-labelledby="life-h" style="display: flex; flex-direction: column; gap: 18px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <p class="eyebrow">02</p>
+        <h2 id="life-h" style="margin: 0; font-size: 28px; font-weight: 700">Status lifecycle</h2>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px">
+        <span class="st" style="border: 1px solid #8C8C8B; color: #4A4A49">Draft</span>
+        <svg aria-hidden="true" width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="#2B2B2B" stroke-width="1.5"><path d="M0 7h26M20 1l6 6-6 6"/></svg>
+        <span class="st" style="background: #2B2B2B; color: #FFFFFF">Processing</span>
+        <svg aria-hidden="true" width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="#2B2B2B" stroke-width="1.5"><path d="M0 7h26M20 1l6 6-6 6"/></svg>
+        <span class="st" style="background: #FEE8CD; color: #7A4100">Pending review</span>
+        <svg aria-hidden="true" width="28" height="14" viewBox="0 0 28 14" fill="none" stroke="#2B2B2B" stroke-width="1.5"><path d="M0 7h26M20 1l6 6-6 6"/></svg>
+        <span style="display: flex; flex-direction: column; gap: 8px">
+          <span class="st" style="background: #E3F1E7; color: #23683A">Published</span>
+          <span class="st" style="background: #EFEFEF; color: #4A4A49">Not published</span>
+        </span>
+      </div>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 15px">
+          <thead>
+            <tr style="text-align: left; border-bottom: 2px solid #2B2B2B">
+              <th scope="col" style="padding: 10px 12px 10px 0; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; width: 170px">Status</th>
+              <th scope="col" style="padding: 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase">What it means</th>
+              <th scope="col" style="padding: 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; width: 200px">Student can</th>
+              <th scope="col" style="padding: 10px 0 10px 12px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; width: 200px">Student is told</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template data-sc-for list="{{statuses}}" as="s" hint-placeholder-count="5">
+              <tr style="border-bottom: 1px solid #E3E3E3; vertical-align: top">
+                <td style="padding: 12px 12px 12px 0; font-weight: 700">{{s.name}}</td>
+                <td style="padding: 12px; color: #4A4A49">{{s.means}}</td>
+                <td style="padding: 12px; color: #4A4A49">{{s.can}}</td>
+                <td style="padding: 12px 0 12px 12px; color: #4A4A49">{{s.told}}</td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <p class="eyebrow">03</p>
+        <h2 style="margin: 0; font-size: 28px; font-weight: 700">Rules</h2>
+        <ul style="margin: 0; padding: 0; list-style: none; border-top: 1px solid #E3E3E3">
+          <template data-sc-for list="{{rules}}" as="r" hint-placeholder-count="7">
+            <li style="padding: 12px 0; border-bottom: 1px solid #E3E3E3; font-size: 15px"><strong>{{r.title}}</strong> <span style="color: #4A4A49">{{r.text}}</span></li>
+          </template>
+        </ul>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <p class="eyebrow">04</p>
+        <h2 style="margin: 0; font-size: 28px; font-weight: 700">Edge cases</h2>
+        <ul style="margin: 0; padding: 0; list-style: none; border-top: 1px solid #E3E3E3">
+          <template data-sc-for list="{{edges}}" as="r" hint-placeholder-count="6">
+            <li style="padding: 12px 0; border-bottom: 1px solid #E3E3E3; font-size: 15px"><strong>{{r.title}}</strong> <span style="color: #4A4A49">{{r.text}}</span></li>
+          </template>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+</template>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const stages = [
+      { num: 'STEP 1', title: 'Choose drive', file: 'S1-Submit-choose-drive.html' },
+      { num: 'STEP 2', title: 'Round details', file: 'S2-Submit-round-details.html' },
+      { num: 'STEP 3', title: 'Type or upload questions', file: 'S3a-Submit-type-questions.html' },
+      { num: 'STEP 4', title: 'Review and submit', file: 'S4-Submit-review-and-confirm.html' },
+      { num: 'CDC', title: 'Batch review', file: 'S6-Submission-status.html' },
+      { num: 'RESULT', title: 'Published or not', file: '10-My-submissions.html' }
+    ];
+    const W = '#FFFFFF', P = '#FEE8CD', G = '#F7F7F7';
+    const c = (text, bg) => ({ text, bg: bg || W });
+    const lanes = [
+      { name: 'Student', cells: [
+        c('Searches the company, picks the open drive. Can ask the CDC to add a missing drive.', P),
+        c('Picks round type, date, platform, duration and sections.', P),
+        c('Types each question in a form, or uploads photos / a PDF of rough sheets.', P),
+        c('Checks the cleaned text against their own, fixes mistakes, confirms the honour statement, submits.', P),
+        c('Waits. Can still edit or withdraw while it is pending.', G),
+        c('Sees "Published" with links to the live questions, or a neutral "Not published".', P)
+      ] },
+      { name: 'The app', cells: [
+        c('Shows only drives that are open. Prefills from the student profile.'),
+        c('Suggests platform and duration from earlier submissions for the same round.'),
+        c('Reads each scan page with the AI service, keeps the text and deletes the image. Autosaves.'),
+        c('Tidies wording, keeps meaning and numbers, suggests type, topic and difficulty. Stores both versions.'),
+        c('Matches the student against the shortlist CSV and groups duplicate questions. Admins see this; the student does not.'),
+        c('Publishes approved questions under company, year and round. Sends the "published" email.')
+      ] },
+      { name: 'CDC admin', cells: [
+        c('Creates the drive and its rounds beforehand; approves drive requests.', G),
+        c('', G),
+        c('', G),
+        c('', G),
+        c('Reviews the whole drive in one sitting: approve, edit, merge or reject with an internal reason.', W),
+        c('Rejections stay internal. No email, no reason shown.', W)
+      ] }
+    ];
+    const statuses = [
+      { name: 'Draft', means: 'Started but not submitted. Kept until the drive closes.', can: 'Continue, delete', told: 'Nothing' },
+      { name: 'Processing', means: 'Scan pages are being read. Usually done before the student leaves step 3.', can: 'Wait, or keep editing other questions', told: 'Progress on screen' },
+      { name: 'Pending review', means: 'With the CDC.', can: 'Edit, withdraw', told: 'Confirmation on screen' },
+      { name: 'Published', means: 'Approved, at least one question is live.', can: 'View, request a correction', told: 'Bell notification and email' },
+      { name: 'Not published', means: 'Rejected, or merged into a question someone else already shared.', can: 'View what they sent', told: 'Nothing. No reason is shown.' }
+    ];
+    const rules = [
+      { title: 'One submission per round.', text: 'A second visit opens the existing one instead of making a duplicate.' },
+      { title: 'Images are never stored.', text: 'Each page is read once and dropped; only the text is kept.' },
+      { title: 'Limits.', text: 'Up to 10 pages or 15 MB per upload, and a daily upload cap per student.' },
+      { title: 'Edits after submitting', text: 'keep the submission in the queue; the CDC sees the latest version.' },
+      { title: 'Anonymous by default.', text: 'Published questions show company, year and round, not the student, unless they opt in to credit.' },
+      { title: 'Honour statement', text: 'is required on step 4: "I sat this test and these questions are from it."' },
+      { title: 'Rejections are silent.', text: 'The status turns grey "Not published"; no email or bell.' }
+    ];
+    const edges = [
+      { title: 'Drive not listed.', text: 'Student sends a short request (company, role, date). It saves as a draft and moves on once the CDC adds the drive.' },
+      { title: 'Drive closed.', text: 'Submissions for that drive are switched off; the page explains and links to Help.' },
+      { title: 'Not on the shortlist.', text: 'Still accepted. The CDC sees a "Not found" tag; the student is not told.' },
+      { title: 'Page unreadable.', text: 'The page is marked "Could not read" with options to retake the photo or type it.' },
+      { title: 'Unclear words.', text: 'The AI marks them [unclear] instead of guessing; the student fills them in on step 4.' },
+      { title: 'Left mid-way.', text: 'The draft opens at the last step reached, from My submissions or the Submit button.' }
+    ];
+    return { stages, lanes, statuses, rules, edges };
+  }
+}
+</script>
+</body>
+</html>
