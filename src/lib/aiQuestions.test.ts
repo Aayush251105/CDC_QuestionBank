@@ -5,6 +5,7 @@ import {
   normaliseAiQuestions,
   questionsSchema,
   splitWithoutAi,
+  withoutOptionLines,
 } from "./aiQuestions";
 
 const TOPICS = ["Sliding window", "SQL", "Graphs"];
@@ -114,6 +115,32 @@ describe("splitWithoutAi options on one line", () => {
       "O(1)",
     ]);
     expect(q.cleaned).toBe("heap build time");
+  });
+});
+
+describe("photo numbers", () => {
+  it("never takes a photo number from the model", () => {
+    const [q] = normaliseAiQuestions(
+      { questions: [{ cleaned: "q", photo: 2 }] },
+      TOPICS,
+    );
+    expect(q.photo).toBeNull();
+    expect(splitWithoutAi("typed question here")[0].photo).toBeNull();
+  });
+});
+
+describe("withoutOptionLines", () => {
+  it("drops option lists the model repeated in the text", () => {
+    expect(
+      withoutOptionLines(
+        "Time to build a heap.\n\nOptions: a) O(n) b) O(n log n)\n\n**Options:** 8h, 10h",
+      ),
+    ).toBe("Time to build a heap.");
+    expect(withoutOptionLines("a) O(n) b) O(1)\nkeep me")).toBe("keep me");
+    // a single "a) ..." line inside the question is left alone
+    expect(withoutOptionLines("Consider:\na) the first case")).toBe(
+      "Consider:\na) the first case",
+    );
   });
 });
 

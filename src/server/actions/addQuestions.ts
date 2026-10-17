@@ -170,11 +170,12 @@ export async function prepareReview(submissionId: string) {
   });
 
   const parts = [
-    s.rawText?.trim(),
-    ...s.scanPages.map((p) =>
-      p.extractedText ? `(From photo ${p.pageNo})\n${p.extractedText}` : "",
-    ),
-  ].filter(Boolean);
+    { text: s.rawText?.trim() ?? "", photo: null },
+    ...s.scanPages.map((p) => ({
+      text: p.extractedText?.trim() ?? "",
+      photo: p.pageNo,
+    })),
+  ].filter((p) => p.text);
   if (parts.length === 0) {
     return {
       message: "Type your questions or add a photo before you continue.",
@@ -198,7 +199,7 @@ export async function prepareReview(submissionId: string) {
 
   let questions;
   try {
-    questions = await structureQuestions(parts.join("\n\n"), context, topics);
+    questions = await structureQuestions(parts, context, topics);
   } catch (e) {
     console.error("[prepareReview]", e instanceof AiError ? e.message : e);
     return {
@@ -230,9 +231,7 @@ export async function prepareReview(submissionId: string) {
           fields: q.answer ? { answer: q.answer } : undefined,
           suggestedTags: q.topics,
           suggestedDifficulty: q.difficulty,
-          scanPageNo: /^\(From photo (\d+)\)/.exec(q.original)
-            ? Number(/^\(From photo (\d+)\)/.exec(q.original)![1])
-            : null,
+          scanPageNo: q.photo,
         },
       }),
     ),

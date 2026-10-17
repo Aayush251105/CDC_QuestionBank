@@ -30,6 +30,9 @@ export async function readPhoto(
   const result = await chatJson<PhotoResult>({
     name: "read_photo",
     model: visionModel,
+    // One page of notes is a few hundred tokens; stays under the free
+    // plan's 1000 output tokens per minute for this model.
+    maxTokens: 900,
     schema: {
       type: "object",
       additionalProperties: false,
@@ -57,33 +60,43 @@ export async function readPhoto(
   return { readable: Boolean(result.readable) && text.length > 0, text };
 }
 
+// One source of questions: the typed notes (photo null) or one photo's text.
+export type NotesPart = { text: string; photo: number | null };
+
 // Splits notes into questions, picks types, tidies wording, suggests topics
 // and difficulty. `context` is the round (company, round type, sections) to
-// help the model; it is not copied into questions.
+// help the model; it is not copied into questions. Each part is sent on its
+// own so we, not the model, know which photo a question came from.
 export async function structureQuestions(
-  notes: string,
+  parts: NotesPart[],
   context: string,
   topicNames: string[],
 ): Promise<AiQuestion[]> {
   const { key, textModel } = aiConfig();
-  if (!key) return splitWithoutAi(notes);
-
   const out: AiQuestion[] = [];
-  for (const chunk of chunkText(notes)) {
-    const reply = await chatJson<unknown>({
-      name: "structure_questions",
-      model: textModel,
-      schema: questionsSchema(topicNames),
-      messages: [
-        { role: "system", content: STRUCTURE },
-        {
-          role: "user",
-          content: `Round: ${context}\nAllowed topics: ${topicNames.join(", ")}\n\nNotes:\n"""\n${chunk}\n"""`,
-        },
-      ],
-    });
-    out.push(...normaliseAiQuestions(reply, topicNames));
-    if (out.length >= MAX_QUESTIONS) break;
+  for (const part of parts) {
+    for (const chunk of chunkText(part.text)) {
+      const found = key
+        ? normaliseAiQuestions(
+            await chatJson<unknown>({
+              name: "structure_questions",
+              model: textModel,
+              maxTokens: 4096,
+              schema: questionsSchema(topicNames),
+              messages: [
+                { role: "system", content: STRUCTURE },
+                {
+                  role: "user",
+                  content: `Round: ${context}\nAllowed topics: ${topicNames.join(", ")}\n\nNotes:\n"""\n${chunk}\n"""`,
+                },
+              ],
+            }),
+            topicNames,
+          )
+        : splitWithoutAi(chunk);
+      out.push(...found.map((q) => ({ ...q, photo: part.photo })));
+      if (out.length >= MAX_QUESTIONS) return out.slice(0, MAX_QUESTIONS);
+    }
   }
-  return out.slice(0, MAX_QUESTIONS);
+  return out;
 }

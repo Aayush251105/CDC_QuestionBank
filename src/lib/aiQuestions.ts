@@ -16,6 +16,7 @@ export type AiQuestion = {
   answer: string; // only if the student wrote one
   topics: string[]; // from our topic list
   difficulty: Difficulty;
+  photo: number | null; // which photo it was read from; null if typed
 };
 
 // JSON schema for Groq's strict structured output: every property required,
@@ -86,8 +87,8 @@ export function normaliseAiQuestions(
     if (!item || typeof item !== "object") continue;
     const q = item as Record<string, unknown>;
     const original = str(q.original, 8000);
-    const cleaned = str(q.cleaned, 8000) || original;
-    if (!cleaned) continue;
+    const rawCleaned = str(q.cleaned, 8000) || original;
+    if (!rawCleaned) continue;
     const options = Array.isArray(q.options)
       ? q.options
           .map((o, i) => ({
@@ -99,6 +100,11 @@ export function normaliseAiQuestions(
           .filter((o) => o.text)
           .slice(0, 6)
       : [];
+    // Options are shown from `options`; drop them if the model repeated
+    // them in the text.
+    const cleaned = options.length
+      ? withoutOptionLines(rawCleaned)
+      : rawCleaned;
     out.push({
       type: TYPES.includes(q.type as QuestionType)
         ? (q.type as QuestionType)
@@ -120,9 +126,26 @@ export function normaliseAiQuestions(
       difficulty: DIFFICULTIES.includes(q.difficulty as Difficulty)
         ? (q.difficulty as Difficulty)
         : "MEDIUM",
+      // Set by the caller, which knows which photo it sent (never the model).
+      photo: null,
     });
   }
   return out;
+}
+
+// Removes "Options: a) .. b) .." lines and lines that are only a list of
+// lettered choices.
+export function withoutOptionLines(text: string): string {
+  return text
+    .split("\n")
+    .filter(
+      (l) =>
+        !/^\s*\**\s*(answer\s+)?options?\s*\**\s*:/i.test(l) &&
+        !/^\s*[-*]?\s*\(?[a-fA-F][).]\s+\S.*\s\(?[b-fB-F][).]\s+\S/.test(l),
+    )
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function firstLine(text: string) {
@@ -198,6 +221,7 @@ export function splitWithoutAi(text: string): AiQuestion[] {
       answer: "",
       topics: [],
       difficulty: "MEDIUM" as Difficulty,
+      photo: null,
     };
   });
 }

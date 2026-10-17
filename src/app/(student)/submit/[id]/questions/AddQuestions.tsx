@@ -10,23 +10,59 @@ import {
   saveNotes,
 } from "@/server/actions/addQuestions";
 
+const MAX_SIDE = 1600;
+const MAX_ORIGINAL_BYTES = 4 * 1024 * 1024;
+
+// Decodes a photo: the fast decoder first, then a plain <img> (some files
+// only decode that way).
+async function decode(
+  file: File,
+): Promise<{ source: CanvasImageSource; w: number; h: number }> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    return { source: bitmap, w: bitmap.width, h: bitmap.height };
+  } catch {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      return { source: img, w: img.naturalWidth, h: img.naturalHeight };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+}
+
 // Shrinks a photo in the browser before upload: longest side 1600 px, JPEG.
-// Keeps uploads small and fast; the original never leaves the phone.
-async function downscale(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("resize failed"))),
-      "image/jpeg",
-      0.85,
-    ),
-  );
+// Keeps uploads small and fast. If the browser cannot decode the file, the
+// original is sent as long as it is a small JPG, PNG or WebP.
+async function prepare(file: File): Promise<File> {
+  try {
+    const { source, w, h } = await decode(file);
+    const scale = Math.min(1, MAX_SIDE / Math.max(w, h));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(w * scale);
+    canvas.height = Math.round(h * scale);
+    canvas
+      .getContext("2d")!
+      .drawImage(source, 0, 0, canvas.width, canvas.height);
+    if ("close" in source) source.close();
+    const blob = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error("resize failed"))),
+        "image/jpeg",
+        0.85,
+      ),
+    );
+    return new File([blob], "page.jpg", { type: "image/jpeg" });
+  } catch (e) {
+    const okType = ["image/jpeg", "image/png", "image/webp"].includes(
+      file.type,
+    );
+    if (okType && file.size <= MAX_ORIGINAL_BYTES) return file;
+    throw e;
+  }
 }
 
 type Page = PhotoPage & { localKey: string };
@@ -114,13 +150,9 @@ export function AddQuestions({
         },
       ]);
       try {
-        const blob = await downscale(file);
         const form = new FormData();
         form.append("submissionId", submissionId);
-        form.append(
-          "photo",
-          new File([blob], "page.jpg", { type: "image/jpeg" }),
-        );
+        form.append("photo", await prepare(file));
         const r = await addPhoto(form);
         if (!r.ok) {
           setPhotoError(r.message);
@@ -132,7 +164,8 @@ export function AddQuestions({
             p.localKey === localKey ? { ...r.page, localKey } : p,
           ),
         );
-      } catch {
+      } catch (e) {
+        console.error("Photo upload failed", e);
         setPhotoError(
           "Could not upload that photo. Check your connection and try again.",
         );

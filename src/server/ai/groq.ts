@@ -29,11 +29,15 @@ export async function chatJson<T>({
   model,
   messages,
   schema,
+  maxTokens,
 }: {
   name: string; // for the log line, e.g. "read-photo"
   model: string;
   messages: ChatMessage[];
   schema: object;
+  // Cap on the reply. Groq's free plan refuses a request whose cap is above
+  // the model's output-tokens-per-minute limit (1000 for the vision model).
+  maxTokens: number;
 }): Promise<T> {
   const { key } = aiConfig();
   if (!key) throw new AiError("GROQ_API_KEY is not set");
@@ -42,6 +46,7 @@ export async function chatJson<T>({
     model,
     messages,
     temperature: 0.1,
+    max_completion_tokens: maxTokens,
     response_format: {
       type: "json_schema",
       json_schema: { name, strict: true, schema },
