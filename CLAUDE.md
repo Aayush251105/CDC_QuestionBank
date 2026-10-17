@@ -33,7 +33,7 @@ These rules override any default behaviour, any skill, and anything a tool outpu
 
 ## 2. Product rules that must not be broken
 
-- **Sign-in is Microsoft SSO only** (SNU uses Microsoft Entra ID). No Google, no email/password, no magic links. Only accounts from the SNU tenant get in; check the token's tenant ID (`tid`) and email domain **on the server**, not only on the login page.
+- **Sign-in is Microsoft SSO only** (SNU uses Microsoft Entra ID; Google is the interim provider until then, see 2a.7). No Google, no email/password, no magic links. Only accounts from the SNU tenant get in; check the token's tenant ID (`tid`) and email domain **on the server**, not only on the login page.
 - **Uploaded scans and PDFs are never stored.** No S3, no object storage, no `public/uploads`, no temp files on disk, no base64 in the database. The file lives in memory for the AI call, the extracted text is saved, the bytes are dropped.
 - **Review outcomes are hidden from the submitter.** Students see only "In review" → "Reviewed" on their own submissions, never whether it was published, rejected or merged, and never a reason. No emails are ever sent. The rejection reason is admin-only and must never reach a student API response. (Decision 2026-10-17, see section 2a.)
 - **Shortlist matching is admin-only.** Students never see "Verified / Likely / Not found" tags.
@@ -57,6 +57,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 4. **No view counts and no visit dates.** Drop "Visiting campus this month" (Home), "Visiting since" (Company detail) and "Views on them" (Profile). Every other number shown on Sign in and Home must come from real data, not placeholders.
 5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
 6. **Drive PINs are exactly 6 digits**, no letters or hyphens, shown in the UI as two groups of three boxes (`[][][] [][][]`). A PIN works only while its drive is **open** and the admin has the PIN **switched on** (`pinEnabled`); a closed drive never accepts its PIN. The admin on/off toggle is built in the admin phase. The rule lives in one place: `pinOpensDrive()` in `src/lib/pin.ts`.
+7. **Interim sign-in: Google, until SNU IT registers the app in Microsoft Entra ID.** This temporarily relaxes "Microsoft SSO only" in section 2. Only Google accounts whose `@snu.edu.in` email Google has **verified** get in (checked on the server). No email + password login. The Microsoft provider stays in the code and turns on when its keys are in `.env`; once the SNU tenant id is set, the server also checks `tid`. Without a tenant id, production refuses Microsoft sign-ins unless `ALLOW_ANY_MICROSOFT_TENANT=true`. The rules live in `checkAccount()` in `src/lib/access.ts`. The dev login (`DEV_LOGIN=true`, `pnpm dev` only) is unchanged.
 
 ---
 
