@@ -220,7 +220,7 @@ async function Company({
                     </dl>
                     {r.questions > 0 ? (
                       <Link
-                        href={`/companies/${company.slug}/${driveSegment(year, drive.sequence)}/${r.slug}`}
+                        href={`/companies/${company.slug}/${driveSegment(year, drive.sequence)}/${r.slug}${roles.length > 1 && role ? `?role=${slugify(role)}` : ""}`}
                         className="inline-flex min-h-11 items-center gap-2 self-start font-bold no-underline hover:underline"
                       >
                         Read {plural(r.questions, "question")}
