@@ -56,7 +56,6 @@ async function RoundStep({ params }: PageProps<"/submit/[id]/round">) {
       count: x.count === null ? "" : String(x.count),
     })),
     notes: s.notes ?? "",
-    method: s.mode === "SCAN" ? "scan" : "type",
   };
 
   return (

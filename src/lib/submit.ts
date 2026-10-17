@@ -93,7 +93,6 @@ export type RoundDetails = {
   durationMin: number | null;
   sections: { name: string; count: number | null }[];
   notes: string | null;
-  method: "type" | "scan";
 };
 
 export function parseRoundDetails(
@@ -143,7 +142,6 @@ export function parseRoundDetails(
   if (sections.length > 10) errors.sections = "Add at most 10 sections.";
 
   const notes = text(form.get("notes")).slice(0, 1000) || null;
-  const method = text(form.get("method")) === "scan" ? "scan" : "type";
 
   if (Object.keys(errors).length || !round) return { ok: false, errors };
   return {
@@ -155,7 +153,6 @@ export function parseRoundDetails(
       durationMin,
       sections,
       notes,
-      method,
     },
   };
 }

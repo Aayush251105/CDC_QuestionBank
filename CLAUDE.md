@@ -59,6 +59,8 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 6. **Drive PINs are exactly 6 digits**, no letters or hyphens, shown in the UI as two groups of three boxes (`[][][] [][][]`). A PIN works only while its drive is **open** and the admin has the PIN **switched on** (`pinEnabled`); a closed drive never accepts its PIN. The admin on/off toggle is built in the admin phase. The rule lives in one place: `pinOpensDrive()` in `src/lib/pin.ts`.
 7. **Interim sign-in: Google, until SNU IT registers the app in Microsoft Entra ID.** This temporarily relaxes "Microsoft SSO only" in section 2. Only Google accounts whose `@snu.edu.in` email Google has **verified** get in (checked on the server). No email + password login. The Microsoft provider stays in the code and turns on when its keys are in `.env`; once the SNU tenant id is set, the server also checks `tid`. Without a tenant id, production refuses Microsoft sign-ins unless `ALLOW_ANY_MICROSOFT_TENANT=true`. The rules live in `checkAccount()` in `src/lib/access.ts`. The dev login (`DEV_LOGIN=true`, `pnpm dev` only) is unchanged.
 8. **A drive is one company visit, with all its roles.** Normally one drive per company per year; if a company comes back the same year, the second visit is a separate drive (`sequence` 2) shown as "2025 · A" / "2025 · B", with its own PIN, and URL segment `2025-b` (the first visit always keeps `2025`). A drive lists every role it hires for; a round can be limited to some roles (`Round.roles`, empty = all roles). With a PIN the student picks their role, and S2 then offers only that role's rounds. **Pages show one role at a time**: when a year has more than one role, Company detail shows a role bar (`?role=sde-i`, default the first role, no combined "all roles" view) and lists only that role's rounds (shared rounds appear under every role), numbered 01, 02 for that role; "Most asked" follows the role. Helpers: `src/lib/drives.ts` (`rolesOf`, `pickRole`, `roundIsFor`, `driveIsFor`).
+9. **The AI does the classifying, not the student** (2026-10-18). S3 is one page, "Add the questions": one large box for everything the student remembers (rough notes, any order) and/or photos of their sheets. The AI splits it into questions, picks each type, tidies the wording (never meaning or numbers), pulls out MCQ options, and suggests topics and difficulty; S4 is where the student checks and fixes. No per-type forms. S2 keeps sections as optional. **Photos only** for now (JPG/PNG/WebP, downscaled in the browser); PDF later via pdf.js in the browser if needed.
+10. **AI provider: Groq** (free API) instead of Claude, until decided otherwise (2026-10-18). OpenAI-compatible endpoint, called with `fetch` (no SDK). Text model `AI_MODEL` (default `openai/gpt-oss-120b`, strict JSON schema output); photos `AI_VISION_MODEL` (default `qwen/qwen3.8-27b`, a preview model, max 3 images per request, no PDF). Key in `GROQ_API_KEY`. Question text and photos are sent to Groq; the photos are never stored by us.
 
 ---
 
@@ -70,7 +72,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 | Styling   | Tailwind CSS with the design tokens in section 5; shadcn/ui only as a base, restyled to match (square corners, no shadows)     |
 | Auth      | Auth.js (`next-auth` v5) with the Microsoft Entra ID provider, issuer limited to the SNU tenant                                |
 | Database  | PostgreSQL via Prisma; Postgres full-text search for `/search`                                                                 |
-| AI        | One server module `src/server/ai/` wrapping a vision-capable LLM API (Claude by default) for scan reading, cleanup and tagging |
+| AI        | One server module `src/server/ai/` wrapping a vision-capable LLM API (Groq for now, 2a.10) for scan reading, cleanup and tagging |
 | Tests     | Vitest for logic, Playwright for the main flows                                                                                |
 | Packaging | Vercel for now; Docker later, only when asked (section 2a)                                                                      |
 
@@ -220,17 +222,17 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
   - S1 offers the PIN and a "Drive not listed" path where the student creates an unverified drive (section 2a). With a PIN the student only picks their role in that drive. S1 is built from these decisions (6 digit boxes, role choice, unlisted-drive form, at most 3 student-created drives a day); if a new S1 design file lands, match it.
   - A draft belongs to a drive from S1 (`Submission.driveId`); the round is picked in S2 from the drive's rounds for the chosen role. "My round is not listed" creates an unverified round (`Round.verified = false`, `createdById`). Unverified drives, rounds and companies never appear in browse pages, search or counts (`visibleRound` / `visibleQuestion` in `src/server/queries/visibility.ts`).
 - Closed drive: submitting is switched off and the page explains it with a link to Help.
-- S3a: fields per type (coding: statement, constraints, sample I/O; MCQ: options; aptitude; SQL; written). Plain textarea with code blocks, no rich-text toolbar.
-- S3b: images or PDF, max 10 pages and 15 MB per upload, plus a daily cap per student. Downscale photos in the browser first. The server reads pages one by one in the request (no queue), shows Reading → Done per page, stores the text, drops the bytes. Unreadable pages get "Could not read" with retake or type options.
+- S3 (one page, 2a.9): a free-text box (autosaved) and photos. Plain textarea, no rich-text toolbar.
+- Photos: images only for now (2a.9), max 10 pages and 15 MB per upload, plus a daily cap per student. Downscale photos in the browser first. The server reads pages one by one in the request (no queue), shows Reading → Done per page, stores the text, drops the bytes. Unreadable pages get "Could not read" with retake or type options.
 - AI prompt rules: transcribe exactly, split into questions, keep code and maths formatting, mark unreadable parts `[unclear]` instead of guessing; cleanup fixes grammar and formatting only, never meaning or numbers; suggest type, topic tags and difficulty. Store original and cleaned text.
 - S4: student's text beside the cleaned text, editable; honour statement required: "I sat this test and these questions are from it."; credit opt-in.
 - S6: status timeline, the questions sent, Edit and Withdraw (with confirm) while pending.
 
 **AI module**
 
-- Every LLM call goes through `src/server/ai/` (read scan page, clean text, suggest tags). Read the key and model from env (`ANTHROPIC_API_KEY`, `AI_MODEL`). Log token usage per call. No other file calls an LLM SDK directly.
-- When writing this module, check the current Anthropic API docs for the model ID and the image input format instead of relying on memory.
-- If `ANTHROPIC_API_KEY` is missing, fall back to a stub that returns the input text unchanged so the flow works locally.
+- Every LLM call goes through `src/server/ai/` (read scan page, clean text, suggest tags). Read the key and models from env (`GROQ_API_KEY`, `AI_MODEL`, `AI_VISION_MODEL`). Log token usage per call. No other file calls an LLM SDK directly.
+- When changing this module, check the provider's current docs for model IDs and the image input format instead of relying on memory.
+- If `GROQ_API_KEY` is missing, fall back to a stub that returns the input text unchanged so the flow works locally.
 
 **Admin side (until it exists)**
 
@@ -293,11 +295,12 @@ AUTH_MICROSOFT_ENTRA_ID_SECRET=
 AUTH_MICROSOFT_ENTRA_ID_TENANT_ID=
 ALLOWED_EMAIL_DOMAINS=snu.edu.in
 DEV_LOGIN=false
-ANTHROPIC_API_KEY=
-AI_MODEL=
+GROQ_API_KEY=
+AI_MODEL=openai/gpt-oss-120b
+AI_VISION_MODEL=qwen/qwen3.8-27b
 UPLOAD_MAX_PAGES=10
 UPLOAD_MAX_MB=15
-UPLOAD_DAILY_CAP=
+UPLOAD_DAILY_CAP=30
 ```
 
 The SNU email domain(s) and tenant are still to be confirmed by the CDC; keep them in env, never hard-coded.

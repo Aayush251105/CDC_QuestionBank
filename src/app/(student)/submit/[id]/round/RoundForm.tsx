@@ -25,7 +25,6 @@ export type RoundInitial = {
   durationMin: string;
   sections: { name: string; count: string }[];
   notes: string;
-  method: "type" | "scan";
 };
 
 const PLATFORMS = [
@@ -74,7 +73,6 @@ export function RoundForm({
   const [sections, setSections] = useState(
     initial.sections.length ? initial.sections : [{ name: "", count: "" }],
   );
-  const [method, setMethod] = useState(initial.method);
 
   function pickRound(id: string) {
     setChoice(id);
@@ -260,40 +258,6 @@ export function RoundForm({
         />
       </div>
 
-      <fieldset className="flex flex-col gap-2.5 border-t border-line pt-6">
-        <legend className="mb-3 text-xl font-bold">
-          How will you add the questions?
-        </legend>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-3">
-          <Option
-            name="method"
-            value="type"
-            checked={method === "type"}
-            onPick={() => setMethod("type")}
-          >
-            <strong className="text-[17px]">Type them in</strong>
-            <span className="text-sm text-ink-3">
-              Best when you remember the questions clearly. A form per question.
-            </span>
-          </Option>
-          <Option
-            name="method"
-            value="scan"
-            checked={method === "scan"}
-            onPick={() => setMethod("scan")}
-          >
-            <strong className="text-[17px]">Upload photos or a PDF</strong>
-            <span className="text-sm text-ink-3">
-              Rough sheets or notes, up to 10 pages. We read the text for you.
-            </span>
-          </Option>
-        </div>
-        <p className="text-sm text-ink-3">
-          You can switch later, or use both: type some questions and upload the
-          rest.
-        </p>
-      </fieldset>
-
       {state.message && (
         <p
           role="alert"
@@ -320,11 +284,7 @@ export function RoundForm({
           disabled={pending}
           className="btn-primary disabled:opacity-60"
         >
-          {pending
-            ? "Saving…"
-            : method === "scan"
-              ? "Continue to upload"
-              : "Continue to type questions"}
+          {pending ? "Saving…" : "Continue to add questions"}
         </button>
       </div>
     </form>

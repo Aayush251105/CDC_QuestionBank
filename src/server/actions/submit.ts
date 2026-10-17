@@ -344,7 +344,6 @@ export async function saveRoundDetails(
     };
   }
 
-  const next = d.method === "scan" ? "upload" : "questions";
   await db.submission.update({
     where: { id: submission.id },
     data: {
@@ -354,9 +353,8 @@ export async function saveRoundDetails(
       durationMin: d.durationMin,
       sections: d.sections,
       notes: d.notes,
-      mode: d.method === "scan" ? "SCAN" : "FORM",
-      lastStep: next,
+      lastStep: "questions",
     },
   });
-  redirect(`/submit/${submission.id}/${next}`);
+  redirect(`/submit/${submission.id}/questions`);
 }

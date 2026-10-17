@@ -97,7 +97,6 @@ describe("parseRoundDetails", () => {
     ["sectionName", ""],
     ["sectionCount", ""],
     ["notes", "Camera proctored."],
-    ["method", "scan"],
   ];
 
   it("reads an existing round with sections", () => {
@@ -111,7 +110,6 @@ describe("parseRoundDetails", () => {
         durationMin: 105,
         sections: [{ name: "Coding", count: 2 }],
         notes: "Camera proctored.",
-        method: "scan",
       },
     });
   });

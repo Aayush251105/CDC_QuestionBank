@@ -189,6 +189,9 @@ model Submission {
   durationMin Int?
   sections    Json? // [{ name: "Coding", count: 2 }]
   notes       String?
+  // S3: everything the student typed or pasted, as they wrote it. The AI
+  // splits it into RawQuestions for the review step (CLAUDE.md 2a.9).
+  rawText     String?
 
   enteredWithPin   Boolean          @default(false)
   mode             SubmissionMode   @default(FORM)

@@ -3,23 +3,24 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SkeletonRows } from "@/components/Skeleton";
 import { SubmitHeader } from "@/components/Stepper";
-import { emptyFields, type QuestionFields } from "@/lib/questionForm";
+import { aiEnabled } from "@/server/ai";
 import { requireUser } from "@/server/auth";
 import { db } from "@/server/db";
-import { type EditorQuestion, QuestionEditor } from "./QuestionEditor";
+import { AddQuestions } from "./AddQuestions";
 
 export const metadata: Metadata = {
-  title: "Type questions · Submit an OA",
+  title: "Add the questions · Submit an OA",
 };
 
 type Props = PageProps<"/submit/[id]/questions">;
 
-// S3a. Type the questions, one form per question.
+// S3 (CLAUDE.md 2a.9): notes and/or photos on one page; the AI does the
+// splitting and sorting.
 export default function QuestionsStepPage(props: Props) {
   return (
     <>
-      <SubmitHeader step={3} title="Type the questions" />
-      <div className="wrap pt-9 pb-16">
+      <SubmitHeader step={3} title="Add the questions" />
+      <div className="wrap max-w-245 pt-9 pb-16">
         <Suspense fallback={<SkeletonRows rows={5} />}>
           <QuestionsStep {...props} />
         </Suspense>
@@ -28,29 +29,23 @@ export default function QuestionsStepPage(props: Props) {
   );
 }
 
-async function QuestionsStep({ params, searchParams }: Props) {
+async function QuestionsStep({ params }: Props) {
   const user = await requireUser();
   const { id } = await params;
-  const { q } = await searchParams;
   const s = await db.submission.findFirst({
     where: { id, userId: user.id },
     select: {
       id: true,
       status: true,
       roundId: true,
-      sections: true,
-      rawQuestions: {
-        orderBy: { order: "asc" },
+      rawText: true,
+      scanPages: {
+        orderBy: { pageNo: "asc" },
         select: {
           id: true,
-          type: true,
-          section: true,
-          difficultyFelt: true,
-          notes: true,
-          fields: true,
-          textOriginal: true,
-          title: true,
-          scanPageNo: true,
+          pageNo: true,
+          readStatus: true,
+          extractedText: true,
         },
       },
     },
@@ -60,34 +55,19 @@ async function QuestionsStep({ params, searchParams }: Props) {
   // The round comes first (S2).
   if (!s.roundId) redirect(`/submit/${s.id}/round`);
 
-  const sections = Array.isArray(s.sections)
-    ? (s.sections as { name: string }[]).map((x) => x.name).filter(Boolean)
-    : [];
-  const initial: EditorQuestion[] = s.rawQuestions.map((r) => {
-    const saved =
-      r.fields && typeof r.fields === "object" && !Array.isArray(r.fields)
-        ? (r.fields as Partial<QuestionFields>)
-        : // Typed before the form kept its fields: start from the text.
-          { title: r.title ?? "", statement: r.textOriginal };
-    return {
-      key: r.id,
-      id: r.id,
-      type: r.type,
-      section: r.section ?? "",
-      difficultyFelt: r.difficultyFelt,
-      notes: r.notes ?? "",
-      fields: { ...emptyFields(), ...saved },
-      // Read from an upload: shown here, corrected on the review step.
-      fromScan: r.scanPageNo !== null ? r.textOriginal : null,
-    };
-  });
-
   return (
-    <QuestionEditor
+    <AddQuestions
       submissionId={s.id}
-      sections={sections}
-      initial={initial}
-      startKey={typeof q === "string" ? q : null}
+      initialText={s.rawText ?? ""}
+      initialPages={s.scanPages.map((p) => ({
+        id: p.id,
+        pageNo: p.pageNo,
+        // A page left "Reading" by a dropped connection counts as unreadable.
+        status: p.readStatus === "DONE" ? "DONE" : "UNREADABLE",
+        text: p.extractedText ?? "",
+      }))}
+      maxPages={Number(process.env.UPLOAD_MAX_PAGES) || 10}
+      photoReadingOn={aiEnabled()}
     />
   );
 }
