@@ -13,7 +13,8 @@ import {
   RoundType,
   SubmissionStatus,
 } from "../src/generated/prisma/client";
-import { normalisePin, slugify } from "../src/lib/slug";
+import { formatPin } from "../src/lib/pin";
+import { slugify } from "../src/lib/slug";
 
 const db = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -97,7 +98,8 @@ type DriveSeed = {
   name: string;
   roles: string[];
   open?: boolean;
-  pin?: string;
+  pin?: string; // 6 digits
+  pinOff?: boolean; // admin has switched the PIN off
   rounds: RoundSeed[];
 };
 
@@ -110,7 +112,7 @@ const DRIVES: DriveSeed[] = [
     name: "SDE intern",
     roles: ["SDE intern"],
     open: true,
-    pin: "AMZN-INT-25",
+    pin: "482915",
     rounds: [
       {
         key: "amz25-oa",
@@ -148,7 +150,7 @@ const DRIVES: DriveSeed[] = [
     name: "SDE I, full time",
     roles: ["SDE I"],
     open: true,
-    pin: "AMZN-FT-25",
+    pin: "736204",
     rounds: [
       {
         key: "amz25ft-oa",
@@ -167,6 +169,7 @@ const DRIVES: DriveSeed[] = [
     year: 2024,
     name: "SDE intern",
     roles: ["SDE intern"],
+    pin: "318046", // closed drive: this PIN must be refused
     rounds: [
       {
         key: "amz24-oa",
@@ -228,7 +231,7 @@ const DRIVES: DriveSeed[] = [
     name: "SWE intern",
     roles: ["SWE intern"],
     open: true,
-    pin: "MSFT-25",
+    pin: "159370",
     rounds: [
       {
         key: "ms25-oa",
@@ -302,7 +305,7 @@ const DRIVES: DriveSeed[] = [
     name: "Analyst",
     roles: ["Analyst"],
     open: true,
-    pin: "DLT-25",
+    pin: "604821",
     rounds: [
       {
         key: "dlt25-oa",
@@ -328,6 +331,9 @@ const DRIVES: DriveSeed[] = [
     year: 2025,
     name: "Ninja",
     roles: ["Ninja", "Digital"],
+    open: true,
+    pin: "927513",
+    pinOff: true, // open drive, PIN switched off: must be refused
     rounds: [
       {
         key: "tcs25-oa",
@@ -832,7 +838,8 @@ async function main() {
         name: dr.name,
         roles: dr.roles,
         status: dr.open ? "OPEN" : "CLOSED",
-        submissionPin: dr.pin ? normalisePin(dr.pin) : null,
+        submissionPin: dr.pin ?? null,
+        pinEnabled: !dr.pinOff,
         pinCreatedAt: dr.pin ? new Date() : null,
       },
     });
@@ -1148,9 +1155,13 @@ async function main() {
     `Seeded ${COMPANIES.length} companies, ${DRIVES.length} drives, ${QUESTIONS.length} questions, ` +
       `${STUDENTS.length + 1} users, ${SUBMISSIONS.length} submissions.`,
   );
-  console.log(
-    "Test PINs for open drives: AMZN-INT-25, AMZN-FT-25, MSFT-25, DLT-25",
-  );
+  console.log("Test PINs:");
+  for (const dr of DRIVES.filter((x) => x.pin)) {
+    const works = dr.open && !dr.pinOff ? "works" : "refused";
+    console.log(
+      `  ${formatPin(dr.pin!)}  ${dr.company} ${dr.year} ${dr.name} (${works})`,
+    );
+  }
 }
 
 main()

@@ -6,8 +6,3 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
-
-// PINs are case-insensitive and ignore spaces and hyphens (CLAUDE.md section 7).
-export function normalisePin(pin: string): string {
-  return pin.replace(/[\s-]+/g, "").toUpperCase();
-}

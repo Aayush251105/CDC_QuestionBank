@@ -56,6 +56,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 3. **Request a correction** (00b, Published row): later phase. Do not build it now.
 4. **No view counts and no visit dates.** Drop "Visiting campus this month" (Home), "Visiting since" (Company detail) and "Views on them" (Profile). Every other number shown on Sign in and Home must come from real data, not placeholders.
 5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
+6. **Drive PINs are exactly 6 digits**, no letters or hyphens, shown in the UI as two groups of three boxes (`[][][] [][][]`). A PIN works only while its drive is **open** and the admin has the PIN **switched on** (`pinEnabled`); a closed drive never accepts its PIN. The admin on/off toggle is built in the admin phase. The rule lives in one place: `pinOpensDrive()` in `src/lib/pin.ts`.
 
 ---
 
@@ -180,7 +181,7 @@ Centre everything on the **Drive** (one company's hiring cycle in one year). Sta
 
 - `User`: id, email, name, rollNo, gradYear, branch, role (`STUDENT` | `ADMIN` | `SUPER_ADMIN`), creditByDefault, entraOid. Created on first Microsoft sign-in; role lives in our DB.
 - `Company`: id, name, slug, sector, aliases[], hidden (CDC can hide a company entirely).
-- `Drive`: id, companyId, year, season, roles[], ctcBand, eligibility, status (`OPEN` | `CLOSED`), submissionPin (unique among open drives), pinCreatedAt, pinRevokedAt. The admin side generates the PIN; seed one per open drive for local testing.
+- `Drive`: id, companyId, year, season, roles[], ctcBand, eligibility, status (`OPEN` | `CLOSED`), submissionPin (6 digits, unique), pinEnabled (admin toggle), pinCreatedAt, verified, createdById. The admin side generates the PIN; the seed has test PINs, including one on a closed drive and one switched off.
 - `Round`: id, driveId, type (OA, technical, HR, GD), date, platform, durationMin, sections.
 - `ShortlistEntry`: roundId, rollNo, email, name (admin side fills it; create the table now).
 - `Submission`: id, userId, roundId, enteredWithPin (bool), mode (`FORM` | `SCAN`), status, lastStep, credit, honourAcceptedAt, verificationTag (admin-only), timestamps. Unique on (userId, roundId): **one submission per round**; a second visit opens the existing one.
@@ -211,7 +212,7 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
 
 - Each step is its own page with the 4-part stepper (Drive, Round, Questions, Review). Steps autosave; Back keeps what was typed; leaving mid-way resumes at `lastStep` from My submissions or the Submit button.
 - **S1 is PIN entry** (Aayush, 2026-10-17). For each placement drive the CDC admin generates a unique PIN and gives it only to shortlisted students. On Submit OA the student enters the PIN and lands straight in that drive; S2 to S6 and everything after stay as designed. This makes submissions more authentic and controlled.
-  - Check the PIN on the server against open drives only; treat it as case-insensitive, ignore spaces. A wrong, revoked or closed-drive PIN shows one neutral message ("This PIN is not valid for an open drive. Check it with the CDC."), never which part was wrong.
+  - Check the PIN on the server with `pinOpensDrive()` (open drive and PIN switched on); keep digits only, so spaces and hyphens typed between the groups are ignored. A wrong, switched-off or closed-drive PIN shows one neutral message ("This PIN is not valid for an open drive. Check it with the CDC."), never which part was wrong.
   - Rate-limit PIN attempts per student (e.g. 5 per 15 minutes) and log failed attempts for admins.
   - The PIN only opens the drive; it does not replace sign-in or the one-submission-per-round rule. Shortlist matching still happens on the admin side.
   - S1 offers the PIN and a "Drive not listed" path where the student creates an unverified drive (section 2a). With a PIN the student only picks their role in that drive. The S1 design file is being updated; build from it when it lands.
