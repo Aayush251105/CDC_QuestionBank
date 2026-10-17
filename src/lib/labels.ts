@@ -44,3 +44,31 @@ export function greeting(now = new Date()) {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+// Round dates are stored as UTC midnight.
+// "14 Aug 2025"
+export function fullDate(date: Date | null): string {
+  if (!date) return "Date not shared";
+  return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}
+
+// "Sep 2025"
+export function monthYear(date: Date | null): string {
+  if (!date) return "–";
+  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+}

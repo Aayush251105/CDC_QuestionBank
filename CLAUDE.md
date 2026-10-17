@@ -58,6 +58,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
 6. **Drive PINs are exactly 6 digits**, no letters or hyphens, shown in the UI as two groups of three boxes (`[][][] [][][]`). A PIN works only while its drive is **open** and the admin has the PIN **switched on** (`pinEnabled`); a closed drive never accepts its PIN. The admin on/off toggle is built in the admin phase. The rule lives in one place: `pinOpensDrive()` in `src/lib/pin.ts`.
 7. **Interim sign-in: Google, until SNU IT registers the app in Microsoft Entra ID.** This temporarily relaxes "Microsoft SSO only" in section 2. Only Google accounts whose `@snu.edu.in` email Google has **verified** get in (checked on the server). No email + password login. The Microsoft provider stays in the code and turns on when its keys are in `.env`; once the SNU tenant id is set, the server also checks `tid`. Without a tenant id, production refuses Microsoft sign-ins unless `ALLOW_ANY_MICROSOFT_TENANT=true`. The rules live in `checkAccount()` in `src/lib/access.ts`. The dev login (`DEV_LOGIN=true`, `pnpm dev` only) is unchanged.
+8. **A drive is one company visit, with all its roles.** Normally one drive per company per year; if a company comes back the same year, the second visit is a separate drive (`sequence` 2) shown as "2025 · A" / "2025 · B", with its own PIN, and URL segment `2025-b` (the first visit always keeps `2025`). A drive lists every role it hires for; a round can be limited to some roles (`Round.roles`, empty = all roles). With a PIN the student picks their role, and S2 then offers only that role's rounds. Helpers: `src/lib/drives.ts`.
 
 ---
 
@@ -182,8 +183,8 @@ Centre everything on the **Drive** (one company's hiring cycle in one year). Sta
 
 - `User`: id, email, name, rollNo, gradYear, branch, role (`STUDENT` | `ADMIN` | `SUPER_ADMIN`), creditByDefault, entraOid. Created on first Microsoft sign-in; role lives in our DB.
 - `Company`: id, name, slug, sector, aliases[], hidden (CDC can hide a company entirely).
-- `Drive`: id, companyId, year, season, roles[], ctcBand, eligibility, status (`OPEN` | `CLOSED`), submissionPin (6 digits, unique), pinEnabled (admin toggle), pinCreatedAt, verified, createdById. The admin side generates the PIN; the seed has test PINs, including one on a closed drive and one switched off.
-- `Round`: id, driveId, type (OA, technical, HR, GD), date, platform, durationMin, sections.
+- `Drive`: id, companyId, year, sequence (visit number in that year, unique per company+year), name (optional label), season, roles[], ctcBand, eligibility, status (`OPEN` | `CLOSED`), submissionPin (6 digits, unique), pinEnabled (admin toggle), pinCreatedAt, verified, createdById. The admin side generates the PIN; the seed has test PINs, including one on a closed drive and one switched off.
+- `Round`: id, driveId, order, slug, name, type (OA, technical, HR, GD), date, format, platform, durationMin, sections, roles[] (empty = every role in the drive).
 - `ShortlistEntry`: roundId, rollNo, email, name (admin side fills it; create the table now).
 - `Submission`: id, userId, roundId, enteredWithPin (bool), mode (`FORM` | `SCAN`), status, lastStep, credit, honourAcceptedAt, verificationTag (admin-only), timestamps. Unique on (userId, roundId): **one submission per round**; a second visit opens the existing one.
 - `ScanPage`: id, submissionId, pageNo, extractedText, readStatus (`READING` | `DONE` | `UNREADABLE`). Text only, never the image.

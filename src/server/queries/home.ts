@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/server/db";
+import { driveLabel } from "@/lib/drives";
 import { visibleDrive, visibleQuestion } from "./visibility";
 
 // Shared questions change only when the CDC publishes, so these are cached
@@ -65,16 +66,32 @@ export async function getOpenDrives(limit = 4) {
     take: limit,
     select: {
       id: true,
-      name: true,
+      companyId: true,
       year: true,
+      sequence: true,
+      roles: true,
       company: { select: { name: true, slug: true } },
       rounds: { select: { _count: { select: { questions: true } } } },
     },
   });
+  // Visits per company and year, so a second visit shows as "2025 · B".
+  const visits = await db.drive.groupBy({
+    by: ["companyId", "year"],
+    where: {
+      ...visibleDrive,
+      companyId: { in: drives.map((d) => d.companyId) },
+    },
+    _count: true,
+  });
+  const visitCount = (companyId: string, year: number) =>
+    visits.find((v) => v.companyId === companyId && v.year === year)?._count ??
+    1;
+
   return drives.map((d) => ({
     id: d.id,
-    name: d.name,
     year: d.year,
+    label: driveLabel(d.year, d.sequence, visitCount(d.companyId, d.year)),
+    roles: d.roles,
     company: d.company,
     questions: d.rounds.reduce((n, r) => n + r._count.questions, 0),
   }));

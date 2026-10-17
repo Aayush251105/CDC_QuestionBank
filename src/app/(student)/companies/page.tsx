@@ -3,12 +3,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { FollowButton } from "@/components/FollowButton";
 import { SkeletonRows } from "@/components/Skeleton";
-import {
-  filterCompanies,
-  monthYear,
-  parseCompanyFilters,
-} from "@/lib/companies";
-import { plural } from "@/lib/labels";
+import { filterCompanies, parseCompanyFilters } from "@/lib/companies";
+import { monthYear, plural } from "@/lib/labels";
 import { requireUser } from "@/server/auth";
 import {
   getCompanyList,

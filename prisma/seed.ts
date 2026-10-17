@@ -91,11 +91,14 @@ type RoundSeed = {
   durationMin?: number;
   sections?: string[];
   slug?: string;
+  roles?: string[]; // only these roles sat the round; empty = all
 };
+// A drive is one visit; a second visit in the same year becomes "2025 · B"
+// (sequence is worked out from the order below).
 type DriveSeed = {
   company: string;
   year: number;
-  name: string;
+  name?: string; // optional label
   roles: string[];
   open?: boolean;
   pin?: string; // 6 digits
@@ -109,8 +112,7 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Amazon",
     year: 2025,
-    name: "SDE intern",
-    roles: ["SDE intern"],
+    roles: ["SDE intern", "SDE I"],
     open: true,
     pin: "482915",
     rounds: [
@@ -123,6 +125,7 @@ const DRIVES: DriveSeed[] = [
         platform: "HackerRank",
         durationMin: 105,
         sections: ["Coding", "Work style survey"],
+        roles: ["SDE intern"],
       },
       {
         key: "amz25-tech",
@@ -132,6 +135,7 @@ const DRIVES: DriveSeed[] = [
         format: "Data structures and problem solving",
         platform: "Amazon Chime",
         durationMin: 60,
+        roles: ["SDE intern"],
       },
       {
         key: "amz25-hr",
@@ -141,33 +145,24 @@ const DRIVES: DriveSeed[] = [
         format: "Leadership principles",
         platform: "On campus",
         durationMin: 45,
+        roles: ["SDE intern"],
       },
-    ],
-  },
-  {
-    company: "Amazon",
-    year: 2025,
-    name: "SDE I, full time",
-    roles: ["SDE I"],
-    open: true,
-    pin: "736204",
-    rounds: [
       {
         key: "amz25ft-oa",
         name: OA,
-        slug: "sde-i-online-assessment", // same company and year as the intern drive
+        slug: "sde-i-online-assessment", // the intern OA already has "online-assessment"
         type: "OA",
         date: d(2025, 9, 2),
         format: "2 coding questions",
         platform: "HackerRank",
         durationMin: 90,
+        roles: ["SDE I"],
       },
     ],
   },
   {
     company: "Amazon",
     year: 2024,
-    name: "SDE intern",
     roles: ["SDE intern"],
     pin: "318046", // closed drive: this PIN must be refused
     rounds: [
@@ -194,7 +189,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Amazon",
     year: 2023,
-    name: "SDE intern",
     roles: ["SDE intern"],
     rounds: [
       {
@@ -211,7 +205,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Amazon",
     year: 2022,
-    name: "SDE intern",
     roles: ["SDE intern"],
     rounds: [
       {
@@ -228,7 +221,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Microsoft",
     year: 2025,
-    name: "SWE intern",
     roles: ["SWE intern"],
     open: true,
     pin: "159370",
@@ -246,7 +238,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Microsoft",
     year: 2024,
-    name: "SWE intern",
     roles: ["SWE intern"],
     rounds: [
       {
@@ -270,7 +261,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Adobe",
     year: 2025,
-    name: "Product intern",
     roles: ["Product intern"],
     rounds: [
       {
@@ -286,7 +276,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Adobe",
     year: 2023,
-    name: "Product intern",
     roles: ["Product intern"],
     rounds: [
       {
@@ -302,7 +291,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Deloitte",
     year: 2025,
-    name: "Analyst",
     roles: ["Analyst"],
     open: true,
     pin: "604821",
@@ -329,7 +317,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "TCS",
     year: 2025,
-    name: "Ninja",
     roles: ["Ninja", "Digital"],
     open: true,
     pin: "927513",
@@ -356,7 +343,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Goldman Sachs",
     year: 2025,
-    name: "Engineering analyst",
     roles: ["Engineering analyst"],
     rounds: [
       {
@@ -370,9 +356,24 @@ const DRIVES: DriveSeed[] = [
     ],
   },
   {
+    // Goldman Sachs came back later the same year: shows as "2025 · B"
+    company: "Goldman Sachs",
+    year: 2025,
+    roles: ["Engineering analyst"],
+    rounds: [
+      {
+        key: "gs25b-oa",
+        name: OA,
+        type: "OA",
+        date: d(2025, 11, 20),
+        platform: "HackerRank",
+        durationMin: 90,
+      },
+    ],
+  },
+  {
     company: "Goldman Sachs",
     year: 2024,
-    name: "Engineering analyst",
     roles: ["Engineering analyst"],
     rounds: [
       {
@@ -388,7 +389,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Samsung R&D",
     year: 2025,
-    name: "Software engineer",
     roles: ["Software engineer"],
     rounds: [
       {
@@ -404,7 +404,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "ZS Associates",
     year: 2025,
-    name: "Business technology analyst",
     roles: ["Business technology analyst"],
     rounds: [
       {
@@ -420,7 +419,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Accenture",
     year: 2025,
-    name: "Associate software engineer",
     roles: ["Associate software engineer"],
     rounds: [
       {
@@ -436,7 +434,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "HCLTech",
     year: 2025,
-    name: "Graduate engineer trainee",
     roles: ["Graduate engineer trainee"],
     rounds: [
       {
@@ -452,7 +449,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "L&T",
     year: 2024,
-    name: "Graduate engineer trainee",
     roles: ["Graduate engineer trainee"],
     rounds: [
       {
@@ -468,7 +464,6 @@ const DRIVES: DriveSeed[] = [
   {
     company: "Infosys",
     year: 2025,
-    name: "Systems engineer",
     roles: ["Systems engineer"],
     rounds: [
       {
@@ -805,11 +800,16 @@ async function main() {
 
   // Drives and rounds
   const roundId = new Map<string, string>();
+  const visitsSoFar = new Map<string, number>();
   for (const dr of DRIVES) {
+    const visitKey = `${dr.company}-${dr.year}`;
+    const sequence = (visitsSoFar.get(visitKey) ?? 0) + 1;
+    visitsSoFar.set(visitKey, sequence);
     const drive = await db.drive.create({
       data: {
         companyId: companyId.get(dr.company)!,
         year: dr.year,
+        sequence,
         name: dr.name,
         roles: dr.roles,
         status: dr.open ? "OPEN" : "CLOSED",
@@ -831,6 +831,7 @@ async function main() {
           platform: r.platform,
           durationMin: r.durationMin,
           sections: r.sections ?? [],
+          roles: r.roles ?? [],
         },
       });
       roundId.set(r.key, round.id);
@@ -1105,7 +1106,7 @@ async function main() {
   for (const dr of DRIVES.filter((x) => x.pin)) {
     const works = dr.open && !dr.pinOff ? "works" : "refused";
     console.log(
-      `  ${formatPin(dr.pin!)}  ${dr.company} ${dr.year} ${dr.name} (${works})`,
+      `  ${formatPin(dr.pin!)}  ${dr.company} ${dr.year} ${dr.roles.join(", ")} (${works})`,
     );
   }
 }

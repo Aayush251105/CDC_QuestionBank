@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 
 const links = [
   { href: "/companies", label: "Companies" },
@@ -12,15 +13,30 @@ const links = [
 ];
 
 // Bold links that turn crimson with an underline when their section is open.
+// Reading the URL happens inside Suspense so pages with dynamic routes can
+// still prerender their shell; the shell shows the nav without a highlight.
 export function NavLinks() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<Nav pathname={null} />}>
+      <ActiveNav />
+    </Suspense>
+  );
+}
+
+function ActiveNav() {
+  return <Nav pathname={usePathname()} />;
+}
+
+function Nav({ pathname }: { pathname: string | null }) {
   return (
     <nav
       aria-label="Main"
       className="flex flex-wrap items-center gap-x-7 pb-3 lg:pb-0"
     >
       {links.map(({ href, label }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const active =
+          pathname !== null &&
+          (pathname === href || pathname.startsWith(`${href}/`));
         return (
           <Link
             key={href}

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   type CompanyListItem,
   filterCompanies,
-  monthYear,
   parseCompanyFilters,
 } from "./companies";
+import { fullDate, monthYear } from "./labels";
 
 const c = (
   name: string,
@@ -91,8 +91,9 @@ describe("parseCompanyFilters", () => {
   });
 });
 
-describe("monthYear", () => {
+describe("dates", () => {
   it("formats like the design", () => {
+    expect(fullDate(new Date("2025-08-14T00:00:00Z"))).toBe("14 Aug 2025");
     expect(monthYear(new Date("2025-09-12T00:00:00Z"))).toBe("Sep 2025");
     expect(monthYear(null)).toBe("–");
   });

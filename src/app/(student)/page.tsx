@@ -114,7 +114,9 @@ async function Home() {
                           {d.company.name}
                         </strong>
                         <span className="text-sm opacity-90">
-                          {d.name} · {d.year}
+                          {[d.roles.join(", "), d.label]
+                            .filter(Boolean)
+                            .join(" · ")}
                         </span>
                       </span>
                       <span className="self-center text-right text-sm leading-tight">

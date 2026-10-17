@@ -61,24 +61,3 @@ export function filterCompanies(
   }
   return rows.sort(byName);
 }
-
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-// "Sep 2025" (round dates are stored as UTC midnight)
-export function monthYear(date: Date | null): string {
-  if (!date) return "–";
-  return `${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
-}

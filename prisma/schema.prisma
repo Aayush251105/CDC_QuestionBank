@@ -65,9 +65,12 @@ model Drive {
   id          String      @id @default(cuid())
   companyId   String
   year        Int
-  name        String // e.g. "SDE intern"; a company can run several drives in a year
+  // A drive is one visit. Usually one per company and year; a second visit in
+  // the same year gets sequence 2 and shows as "2025 · B" (src/lib/drives.ts).
+  sequence    Int         @default(1)
+  name        String? // optional label, e.g. "Off-campus drive"
   season      String?
-  roles       String[]
+  roles       String[] // every role hired for in this drive
   ctcBand     String?
   eligibility String?
   status      DriveStatus @default(OPEN)
@@ -93,7 +96,7 @@ model Drive {
   rounds      Round[]
   pinAttempts PinAttempt[]
 
-  @@index([companyId, year])
+  @@unique([companyId, year, sequence])
 }
 
 enum RoundType {
@@ -115,6 +118,7 @@ model Round {
   platform    String?
   durationMin Int?
   sections    String[]
+  roles       String[] // only these roles sat this round; empty = every role in the drive
 
   drive       Drive                @relation(fields: [driveId], references: [id], onDelete: Cascade)
   questions   Question[]
