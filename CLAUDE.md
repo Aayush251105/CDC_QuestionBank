@@ -35,11 +35,27 @@ These rules override any default behaviour, any skill, and anything a tool outpu
 
 - **Sign-in is Microsoft SSO only** (SNU uses Microsoft Entra ID). No Google, no email/password, no magic links. Only accounts from the SNU tenant get in; check the token's tenant ID (`tid`) and email domain **on the server**, not only on the login page.
 - **Uploaded scans and PDFs are never stored.** No S3, no object storage, no `public/uploads`, no temp files on disk, no base64 in the database. The file lives in memory for the AI call, the extracted text is saved, the bytes are dropped.
-- **Rejections are silent.** A rejected or merged submission shows as grey "Not published" with no reason, no email, no bell. The rejection reason is admin-only and must never reach a student API response.
+- **Review outcomes are hidden from the submitter.** Students see only "In review" → "Reviewed" on their own submissions, never whether it was published, rejected or merged, and never a reason. No emails are ever sent. The rejection reason is admin-only and must never reach a student API response. (Decision 2026-10-17, see section 2a.)
 - **Shortlist matching is admin-only.** Students never see "Verified / Likely / Not found" tags.
 - **Anonymous by default.** Published questions show company, year, round and role, never the submitter, unless the student opted in to credit.
 - **Keep the architecture simple.** One Next.js app, one Postgres database. No microservices, no job queue, no Redis, no file storage. Ask before adding any new service or a large dependency.
 - **Leave room for a future AI mock interviewer** (not approved yet): keep questions as structured data (markdown body + type + tags + difficulty), keep every LLM call in one module, and leave `/practice` unused. Do not build it.
+
+---
+
+## 2a. Decisions log
+
+Aayush's answers to open questions. Where these differ from later sections or from the design files, these win.
+
+**2026-10-17**
+
+1. **Two ways into Submit OA (S1).**
+   - **With a PIN:** the drive already exists, so the student does not fill in drive details. They pick which role in that drive they sat for, then go to round details (S2) as designed.
+   - **Drive not listed:** if the CDC has not added the drive, the student creates it themselves (company, year, role and the other drive details). It is saved as an **unverified** drive. Later the admin sees these entries, creates or picks the real drive, attaches the entries they want and publishes. The admin side comes later, but the schema must allow a submission on an unverified, student-created drive.
+2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails at all**: drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
+3. **Request a correction** (00b, Published row): later phase. Do not build it now.
+4. **No view counts and no visit dates.** Drop "Visiting campus this month" (Home), "Visiting since" (Company detail) and "Views on them" (Profile). Every other number shown on Sign in and Home must come from real data, not placeholders.
+5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
 
 ---
 
@@ -53,7 +69,7 @@ These rules override any default behaviour, any skill, and anything a tool outpu
 | Database  | PostgreSQL via Prisma; Postgres full-text search for `/search`                                                                 |
 | AI        | One server module `src/server/ai/` wrapping a vision-capable LLM API (Claude by default) for scan reading, cleanup and tagging |
 | Tests     | Vitest for logic, Playwright for the main flows                                                                                |
-| Packaging | Docker + `docker-compose.yml` (app + Postgres) so it can move to SNU servers later                                             |
+| Packaging | Vercel for now; Docker later, only when asked (section 2a)                                                                      |
 
 Package manager: **pnpm**. Node 20 LTS or newer.
 
@@ -143,7 +159,7 @@ Tokens (put them in `tailwind.config` / CSS variables once, use names, never raw
 | `cream`           | `#F4E6CD`             | text on charcoal                                                                                                                      |
 | `grey-band`       | `#F7F7F7`             | section backgrounds, header bands                                                                                                     |
 
-Status tags: Draft = outline; Processing = charcoal; Pending review = peach bg, `#7A4100` text; Published = `#E3F1E7` bg, `#23683A` text; Not published = `#EFEFEF` bg, grey text, no reason.
+Status tags: Draft = outline; Processing = charcoal; Pending review = peach bg, `#7A4100` text; Published = `#E3F1E7` bg, `#23683A` text; Not published = `#EFEFEF` bg, grey text, no reason. Students only ever see Draft, Processing, In review (peach) and Reviewed (grey); Published / Not published are for the admin side (section 2a).
 
 Rules:
 
@@ -174,7 +190,7 @@ Centre everything on the **Drive** (one company's hiring cycle in one year). Sta
 - `QuestionSource`: questionId, rawQuestionId (links merged duplicates to all submitters).
 - `Tag` (topic / skill) with a join to `Question`.
 - `Bookmark`: userId plus companyId or questionId.
-- `Notification`: userId, kind, link, readAt. Only "published" creates one; nothing is created for rejections.
+- `Notification`: userId, kind, link, readAt. Never reveals a review outcome (section 2a).
 - `ReviewAction`: adminId, target, action, reason, createdAt (admin-only audit log).
 
 Submission statuses in the DB: `DRAFT`, `PROCESSING`, `PENDING_REVIEW`, `PUBLISHED`, `NOT_PUBLISHED`, `WITHDRAWN`. Students may edit or withdraw only while `PENDING_REVIEW` and before review starts. Map statuses to labels in one place. The student API must never return `verificationTag`, rejection reasons or other submitters.
@@ -198,7 +214,7 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
   - Check the PIN on the server against open drives only; treat it as case-insensitive, ignore spaces. A wrong, revoked or closed-drive PIN shows one neutral message ("This PIN is not valid for an open drive. Check it with the CDC."), never which part was wrong.
   - Rate-limit PIN attempts per student (e.g. 5 per 15 minutes) and log failed attempts for admins.
   - The PIN only opens the drive; it does not replace sign-in or the one-submission-per-round rule. Shortlist matching still happens on the admin side.
-  - The current `S1-Submit-choose-drive.html` shows a drive picker and a "Drive not listed" request. The S1 design is being updated for the PIN; build S1 from the updated file when it lands, and ask Aayush before keeping any picker or no-PIN path.
+  - S1 offers the PIN and a "Drive not listed" path where the student creates an unverified drive (section 2a). With a PIN the student only picks their role in that drive. The S1 design file is being updated; build from it when it lands.
 - Closed drive: submitting is switched off and the page explains it with a link to Help.
 - S3a: fields per type (coding: statement, constraints, sample I/O; MCQ: options; aptitude; SQL; written). Plain textarea with code blocks, no rich-text toolbar.
 - S3b: images or PDF, max 10 pages and 15 MB per upload, plus a daily cap per student. Downscale photos in the browser first. The server reads pages one by one in the request (no queue), shows Reading → Done per page, stores the text, drops the bytes. Unreadable pages get "Could not read" with retake or type options.
@@ -222,7 +238,7 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
 
 Work in this order. Each numbered item ends with the commit question from section 1.
 
-1. Scaffold: Next.js + TS + Tailwind + ESLint + Prettier, tokens, DM Sans, `docker-compose.yml` with Postgres, `.env.example`.
+1. Scaffold: Next.js + TS + Tailwind + ESLint + Prettier, tokens, DM Sans, `.env.example` (done; no Docker, section 2a).
 2. Prisma schema + first migration + seed from the design sample data.
 3. Auth: Entra ID provider, tenant check, dev login, `requireUser()`; page 01 Sign in with its states.
 4. Shared layout: header, top strip, footer, breadcrumbs, status tag, toast; page 14 (404 / 403).
@@ -239,7 +255,7 @@ Work in this order. Each numbered item ends with the commit question from sectio
 15. Submit S4 and S5.
 16. Pages 10 My submissions and S6 Submission status.
 17. Page 13 Help and FAQ, notifications bell.
-18. Playwright tests for sign-in, browse, submit; Dockerfile; README.
+18. Playwright tests for sign-in, browse, submit; README; Vercel deploy.
 
 Before saying a page is done: compare it with its design file in a browser at desktop and phone width, run the checks below, and list anything that differs from the design.
 
@@ -255,7 +271,6 @@ pnpm test              # Vitest
 pnpm test:e2e          # Playwright
 pnpm db:migrate        # prisma migrate dev
 pnpm db:seed           # prisma db seed
-docker compose up -d   # local Postgres
 ```
 
 Create these scripts in `package.json` during step 1. Run lint, typecheck and tests before every commit question.
