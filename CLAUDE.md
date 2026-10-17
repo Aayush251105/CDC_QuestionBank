@@ -2,7 +2,7 @@
 
 This repo is the web app for the Career Development Centre (CDC) of Shiv Nadar University (SNU). Students who sat a company's online assessment (OA) share the questions; CDC admins verify and approve them; every SNU student can then browse them by company, year, round and topic.
 
-Your job in this repo right now is the **student side of the portal**, built from the designs in `CDC-Student-Portal-Designs/`. The admin portal comes later and is out of scope unless the owner (Aayush) asks for it.
+Your job in this repo is the **student side of the portal**, built from the designs in `CDC-Student-Portal-Designs/`, and the **admin portal** (approved by Aayush, 2026-10-17), built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (see 2a.9).
 
 ---
 
@@ -59,6 +59,15 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 6. **Drive PINs are exactly 6 digits**, no letters or hyphens, shown in the UI as two groups of three boxes (`[][][] [][][]`). A PIN works only while its drive is **open** and the admin has the PIN **switched on** (`pinEnabled`); a closed drive never accepts its PIN. The admin on/off toggle is built in the admin phase. The rule lives in one place: `pinOpensDrive()` in `src/lib/pin.ts`.
 7. **Interim sign-in: Google, until SNU IT registers the app in Microsoft Entra ID.** This temporarily relaxes "Microsoft SSO only" in section 2. Only Google accounts whose `@snu.edu.in` email Google has **verified** get in (checked on the server). No email + password login. The Microsoft provider stays in the code and turns on when its keys are in `.env`; once the SNU tenant id is set, the server also checks `tid`. Without a tenant id, production refuses Microsoft sign-ins unless `ALLOW_ANY_MICROSOFT_TENANT=true`. The rules live in `checkAccount()` in `src/lib/access.ts`. The dev login (`DEV_LOGIN=true`, `pnpm dev` only) is unchanged.
 8. **A drive is one company visit, with all its roles.** Normally one drive per company per year; if a company comes back the same year, the second visit is a separate drive (`sequence` 2) shown as "2025 · A" / "2025 · B", with its own PIN, and URL segment `2025-b` (the first visit always keeps `2025`). A drive lists every role it hires for; a round can be limited to some roles (`Round.roles`, empty = all roles). With a PIN the student picks their role, and S2 then offers only that role's rounds. **Pages show one role at a time**: when a year has more than one role, Company detail shows a role bar (`?role=sde-i`, default the first role, no combined "all roles" view) and lists only that role's rounds (shared rounds appear under every role), numbered 01, 02 for that role; "Most asked" follows the role. Helpers: `src/lib/drives.ts` (`rolesOf`, `pickRole`, `roundIsFor`, `driveIsFor`).
+9. **Admin portal is in scope**, built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (A00a page map, A00b PIN workflow, A01 to A14) under `/admin`, every page and action behind `requireRole("ADMIN", "SUPER_ADMIN")` (A13 super admin only). Where those designs differ from this log, this log wins:
+   - PINs stay **6 digits** (2a.6), not the designs' 6 letters and digits (`K7Q-4MX`). The admin side shows a PIN as Expired after the drive's `closesAt` (`pinState()` in `src/lib/admin.ts`); the student-side check `pinOpensDrive()` is unchanged.
+   - The admin portal does not change student pages or student code.
+   - **No emails** (2a.2): no "Email to the shortlist", no "Email the new PIN" on regenerate, no Email templates section. The PIN page keeps "Copy message".
+   - **No view counts** (2a.4): no Views column on A09, no "Most viewed" lists on A12.
+   - Students still see only "In review" / "Reviewed" and one neutral wrong-PIN message, whatever A00b says.
+   - Sign-in tenant and email domains stay in env; A13 shows them read-only.
+   - Drive reports (A12) are CSV only; a PDF needs a new dependency, so ask first.
+   - A "drive request" (A02 Requests) is a student-created unverified drive (2a.1).
 
 ---
 
@@ -231,9 +240,11 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
 - When writing this module, check the current Anthropic API docs for the model ID and the image input format instead of relying on memory.
 - If `ANTHROPIC_API_KEY` is missing, fall back to a stub that returns the input text unchanged so the flow works locally.
 
-**Admin side (until it exists)**
+**Admin side**
 
-- Do not build `/admin` pages (they are being designed separately, including PIN generation). To see published content locally, use `prisma/seed.ts` and a small script `pnpm dev:publish <submissionId>` that marks a submission published. Keep `/admin` reserved.
+- Built under `/admin` from the admin designs (2a.9). Every approval, edit, rejection, PIN action, shortlist upload, block and role or setting change writes a `ReviewAction` row (the audit log); rows are never edited or deleted.
+- Shortlist CSVs are read in memory; only their rows are stored (`ShortlistUpload`, `ShortlistEntry`), never the file.
+- Admin actions that change what students see must refresh the `questions` cache tag.
 
 ---
 
@@ -259,6 +270,10 @@ Work in this order. Each numbered item ends with the commit question from sectio
 16. Pages 10 My submissions and S6 Submission status.
 17. Page 13 Help and FAQ, notifications bell.
 18. Playwright tests for sign-in, browse, submit; README; Vercel deploy.
+
+Admin portal (2a.9), same commit question after each item:
+
+A1. Admin schema, migration and seed. A2. Admin shell (sidebar, header, guard) and A01 Dashboard. A3. A02 Drives and drive requests. A4. A03 New and edit drive. A5. A04 Drive detail. A6. A05 Drive PIN. A7. A06 Shortlist upload and matching. A8. A07 Review batch. A9. A08 Review a submission. A10. A09 Questions. A11. A10 Companies. A12. A11 Students and blocking. A13. A12 Analytics and reports. A14. A13 Admins and settings. A15. A14 Audit log and global search. A16. Admin tests and README.
 
 Before saying a page is done: compare it with its design file in a browser at desktop and phone width, run the checks below, and list anything that differs from the design.
 

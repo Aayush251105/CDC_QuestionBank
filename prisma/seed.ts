@@ -12,6 +12,7 @@ import {
   QuestionType,
   RoundType,
   SubmissionStatus,
+  VerificationTag,
 } from "../src/generated/prisma/client";
 import { formatPin } from "../src/lib/pin";
 import { slugify } from "../src/lib/slug";
@@ -800,11 +801,15 @@ async function main() {
 
   // Drives and rounds
   const roundId = new Map<string, string>();
+  const driveOf = new Map<string, string>(); // round key -> drive id
   const visitsSoFar = new Map<string, number>();
   for (const dr of DRIVES) {
     const visitKey = `${dr.company}-${dr.year}`;
     const sequence = (visitsSoFar.get(visitKey) ?? 0) + 1;
     visitsSoFar.set(visitKey, sequence);
+    // Window: from the first round; closed drives end 14 days after the
+    // last round. Open drives get no end date so the test PINs keep working.
+    const dates = dr.rounds.map((r) => r.date.getTime());
     const drive = await db.drive.create({
       data: {
         companyId: companyId.get(dr.company)!,
@@ -813,6 +818,13 @@ async function main() {
         name: dr.name,
         roles: dr.roles,
         status: dr.open ? "OPEN" : "CLOSED",
+        opensAt: dates.length ? new Date(Math.min(...dates)) : null,
+        closesAt:
+          dates.length && !dr.open
+            ? new Date(Math.max(...dates) + 14 * 86_400_000)
+            : null,
+        // Older drives without a PIN were run before PINs existed.
+        requirePin: Boolean(dr.pin) || dr.open === true,
         submissionPin: dr.pin ?? null,
         pinEnabled: !dr.pinOff,
         pinCreatedAt: dr.pin ? new Date() : null,
@@ -835,6 +847,7 @@ async function main() {
         },
       });
       roundId.set(r.key, round.id);
+      driveOf.set(r.key, drive.id);
     }
   }
 
@@ -878,11 +891,25 @@ async function main() {
     });
     userId.set(s.key, u.id);
   }
-  await db.user.create({
-    data: { name: "CDC Admin", email: "cdc.admin@snu.edu.in", role: "ADMIN" },
+  const admin = await db.user.create({
+    data: {
+      name: "CDC Admin",
+      email: "cdc.admin@snu.edu.in",
+      role: "ADMIN",
+      lastSignInAt: new Date(),
+    },
+  });
+  const superAdmin = await db.user.create({
+    data: {
+      name: "CDC Super Admin",
+      email: "cdc.superadmin@snu.edu.in",
+      role: "SUPER_ADMIN",
+      lastSignInAt: new Date(),
+    },
   });
 
-  // Submissions (10-My-submissions for Aayush; Khushi so "Shared by" counts are real)
+  // Submissions (10-My-submissions for Aayush; Khushi so "Shared by" counts
+  // are real). The pending ones fill the admin review queue (A07, A08).
   type SubSeed = {
     user: string;
     round: string;
@@ -891,6 +918,7 @@ async function main() {
     submittedAt?: Date;
     reviewedAt?: Date;
     credit?: boolean;
+    tag?: VerificationTag; // shortlist check, admin only
     raw: {
       type: QuestionType;
       title: string;
@@ -922,6 +950,7 @@ async function main() {
       round: "amz25-tech",
       status: "PENDING_REVIEW",
       submittedAt: d(2025, 8, 28),
+      tag: "VERIFIED", // on the technical interview shortlist by email
       raw: [
         {
           type: "CODING",
@@ -932,6 +961,44 @@ async function main() {
           type: "WRITTEN",
           title: "Tell me about a time you disagreed",
           text: "behavioural: a time you disagreed with a teammate",
+        },
+      ],
+    },
+    {
+      // Not on the technical interview shortlist: "Not found" in review.
+      // Sends the same LCA question as Aayush, so A07 shows a duplicate group.
+      user: "khushi",
+      round: "amz25-tech",
+      status: "PENDING_REVIEW",
+      credit: true,
+      submittedAt: d(2025, 8, 29),
+      tag: "NOT_FOUND",
+      raw: [
+        {
+          type: "CODING",
+          title: "Lowest common ancestor in a BST",
+          text: "lca of 2 nodes in bst, iterative solution asked",
+        },
+        {
+          type: "CODING",
+          title: "Design an LRU cache",
+          text: "design lru cache get put O(1). capacity given. asked follow up for thread safety",
+        },
+      ],
+    },
+    {
+      // Matched on name only: "Likely" in review
+      user: "khushi",
+      round: "dlt25-oa",
+      status: "PENDING_REVIEW",
+      credit: true,
+      submittedAt: d(2025, 7, 31),
+      tag: "LIKELY",
+      raw: [
+        {
+          type: "SQL",
+          title: "Employees earning more than their manager",
+          text: "employee table with managerId, find employees earning more than their manager",
         },
       ],
     },
@@ -1029,12 +1096,18 @@ async function main() {
     },
   ];
 
+  const pinOf = (roundKey: string) =>
+    DRIVES.find((dr) => dr.rounds.some((r) => r.key === roundKey))?.pin;
+  const approvedOnce = new Set<string>(); // first source approves, later ones merge
+
   for (const s of SUBMISSIONS) {
+    const pin = pinOf(s.round);
     const sub = await db.submission.create({
       data: {
         userId: userId.get(s.user)!,
         roundId: roundId.get(s.round)!,
-        enteredWithPin: true,
+        enteredWithPin: Boolean(pin),
+        pinUsed: pin ?? null,
         status: s.status,
         lastStep: s.lastStep ?? "review",
         credit: s.credit ?? false,
@@ -1042,9 +1115,20 @@ async function main() {
         submittedAt: s.submittedAt,
         reviewStartedAt: s.reviewedAt,
         reviewedAt: s.reviewedAt,
+        verificationTag:
+          s.tag ?? (s.status === "DRAFT" ? null : ("VERIFIED" as const)),
       },
     });
     for (const [i, r] of s.raw.entries()) {
+      const decision =
+        s.status === "NOT_PUBLISHED"
+          ? ("REJECTED" as const)
+          : r.publishedAs
+            ? approvedOnce.has(r.publishedAs)
+              ? ("MERGED" as const)
+              : ("APPROVED" as const)
+            : null;
+      if (r.publishedAs) approvedOnce.add(r.publishedAs);
       const raw = await db.rawQuestion.create({
         data: {
           submissionId: sub.id,
@@ -1053,8 +1137,24 @@ async function main() {
           title: r.title,
           textOriginal: r.text,
           textCleaned: s.status === "DRAFT" ? null : r.text,
+          decision,
         },
       });
+      if (decision) {
+        await db.reviewAction.create({
+          data: {
+            adminId: admin.id,
+            targetType: "rawQuestion",
+            targetId: raw.id,
+            action: decision.toLowerCase(),
+            driveId: driveOf.get(s.round),
+            summary: r.title,
+            reason:
+              decision === "REJECTED" ? "Too vague to be useful" : undefined,
+            createdAt: s.reviewedAt,
+          },
+        });
+      }
       if (r.publishedAs) {
         const qid = questionId.get(r.publishedAs)!;
         await db.questionSource.create({
@@ -1098,9 +1198,171 @@ async function main() {
     },
   });
 
+  // ---------- Admin side (A04 to A07, A14) ----------
+
+  const email = (key: string) => STUDENTS.find((s) => s.key === key)!.email;
+  type Row = { rollNo?: string; email?: string; name?: string };
+  // Rows that name a seeded student match them; the rest stay unmatched,
+  // as rows do until that student first signs in.
+  const SHORTLISTS: { round: string; file: string; at: Date; rows: Row[] }[] = [
+    {
+      round: "amz25-oa",
+      file: "amazon_2025_oa_shortlist.csv",
+      at: d(2025, 8, 13),
+      rows: [
+        { email: email("aayush") },
+        { email: email("khushi") },
+        { rollNo: "2210110999" },
+      ],
+    },
+    {
+      round: "amz25-tech",
+      file: "amazon_2025_round2_shortlist.csv",
+      at: d(2025, 8, 26),
+      rows: [{ email: email("aayush") }, { rollNo: "2210110512" }],
+    },
+    {
+      round: "dlt25-oa",
+      file: "deloitte_2025_shortlist.csv",
+      at: d(2025, 7, 28),
+      rows: [{ name: "Khushi Jain" }],
+    },
+  ];
+  for (const sl of SHORTLISTS) {
+    const upload = await db.shortlistUpload.create({
+      data: {
+        roundId: roundId.get(sl.round)!,
+        fileName: sl.file,
+        uploadedById: admin.id,
+        createdAt: sl.at,
+      },
+    });
+    let matched = 0;
+    for (const [i, row] of sl.rows.entries()) {
+      const student = STUDENTS.find(
+        (s) => s.email === row.email || s.name === row.name,
+      );
+      if (student) matched++;
+      await db.shortlistEntry.create({
+        data: {
+          uploadId: upload.id,
+          roundId: upload.roundId,
+          rowNo: i + 1,
+          ...row,
+          matchedUserId: student ? userId.get(student.key) : null,
+          match: !student ? "NONE" : row.email ? "EMAIL" : "NAME",
+        },
+      });
+    }
+    await db.reviewAction.create({
+      data: {
+        adminId: admin.id,
+        targetType: "round",
+        targetId: upload.roundId,
+        action: "shortlist_upload",
+        driveId: driveOf.get(sl.round),
+        summary: sl.file,
+        detail: `${sl.rows.length} rows, ${sl.rows.length - matched} unmatched`,
+        createdAt: sl.at,
+      },
+    });
+  }
+
+  // PIN history for the drives that have one
+  for (const dr of DRIVES.filter((x) => x.pin)) {
+    const id = driveOf.get(dr.rounds[0].key)!;
+    await db.reviewAction.createMany({
+      data: [
+        {
+          adminId: admin.id,
+          targetType: "drive",
+          targetId: id,
+          action: "drive_create",
+          driveId: id,
+          summary: `${dr.company} ${dr.year}`,
+          createdAt: dr.rounds[0].date,
+        },
+        {
+          adminId: admin.id,
+          targetType: "drive",
+          targetId: id,
+          action: "pin_generate",
+          driveId: id,
+          summary: `${dr.company} ${dr.year}`,
+          createdAt: dr.rounds[0].date,
+        },
+      ],
+    });
+  }
+  await db.reviewAction.create({
+    data: {
+      adminId: superAdmin.id,
+      targetType: "user",
+      targetId: admin.id,
+      action: "role_change",
+      summary: "CDC Admin",
+      detail: "Added as CDC admin",
+    },
+  });
+
+  // A drive request (A02 Requests): Khushi sat a test the CDC had not added,
+  // so she created the drive herself. It stays unverified until an admin
+  // attaches it to a real drive or declines it (CLAUDE.md 2a.1).
+  const zomato = await db.company.create({
+    data: {
+      name: "Zomato",
+      slug: "zomato",
+      sector: "Software",
+      verified: false,
+    },
+  });
+  const request = await db.drive.create({
+    data: {
+      companyId: zomato.id,
+      year: 2025,
+      roles: ["Product analyst"],
+      verified: false,
+      requirePin: false,
+      createdById: userId.get("khushi"),
+      rounds: {
+        create: {
+          order: 1,
+          slug: "online-assessment",
+          name: OA,
+          type: "OA",
+          date: d(2025, 10, 12),
+          platform: "HackerEarth",
+        },
+      },
+    },
+    include: { rounds: true },
+  });
+  await db.submission.create({
+    data: {
+      userId: userId.get("khushi")!,
+      roundId: request.rounds[0].id,
+      status: "PENDING_REVIEW",
+      credit: true,
+      honourAcceptedAt: d(2025, 10, 13),
+      submittedAt: d(2025, 10, 13),
+      rawQuestions: {
+        create: {
+          order: 1,
+          type: "APTITUDE",
+          title: "Estimate daily food orders in Delhi",
+          textOriginal: "guesstimate: daily food delivery orders in delhi",
+          textCleaned: "guesstimate: daily food delivery orders in delhi",
+        },
+      },
+    },
+  });
+
   console.log(
-    `Seeded ${COMPANIES.length} companies, ${DRIVES.length} drives, ${QUESTIONS.length} questions, ` +
-      `${STUDENTS.length + 1} users, ${SUBMISSIONS.length} submissions.`,
+    `Seeded ${COMPANIES.length + 1} companies, ${DRIVES.length + 1} drives, ${QUESTIONS.length} questions, ` +
+      `${STUDENTS.length + 2} users, ${SUBMISSIONS.length + 1} submissions.`,
+  );
+  console.log(
+    "Admins: cdc.admin@snu.edu.in (admin), cdc.superadmin@snu.edu.in (super admin)",
   );
   console.log("Test PINs:");
   for (const dr of DRIVES.filter((x) => x.pin)) {
