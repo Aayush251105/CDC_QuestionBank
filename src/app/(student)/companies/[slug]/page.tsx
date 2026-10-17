@@ -5,8 +5,16 @@ import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { FollowButton } from "@/components/FollowButton";
 import { SkeletonRows } from "@/components/Skeleton";
-import { driveLabel, driveSegment } from "@/lib/drives";
+import {
+  driveIsFor,
+  driveLabel,
+  driveSegment,
+  pickRole,
+  rolesOf,
+  roundIsFor,
+} from "@/lib/drives";
 import { fullDate, plural } from "@/lib/labels";
+import { slugify } from "@/lib/slug";
 import { requireUser } from "@/server/auth";
 import { db } from "@/server/db";
 import { getCompanyDetail } from "@/server/queries/company";
@@ -15,8 +23,9 @@ export const metadata: Metadata = {
   title: "Company · Placement Question Bank",
 };
 
-// Page 04. The year tab lives in the URL (?year=2025) so Back and shared
-// links keep it.
+// Page 04. Year and role live in the URL (?year=2025&role=sde-i) so Back and
+// shared links keep them. A company can hire for several roles in one drive,
+// each with its own rounds, so the page shows one role at a time.
 export default function CompanyPage(props: PageProps<"/companies/[slug]">) {
   return (
     <Suspense fallback={<CompanySkeleton />}>
@@ -37,21 +46,42 @@ async function Company({
   const query = await searchParams;
   const asked = Number(query.year);
   const year = company.years.includes(asked) ? asked : company.years[0];
-  const drives = company.drives.filter((d) => d.year === year);
-  const topics = company.topicsByYear.get(year) ?? [];
+  const drivesThisYear = company.drives.filter((d) => d.year === year);
+
+  const roles = rolesOf(drivesThisYear);
+  const role = pickRole(
+    roles,
+    typeof query.role === "string" ? query.role : undefined,
+    slugify,
+  );
+  // Only the drives and rounds for the chosen role.
+  const drives = drivesThisYear
+    .filter((d) => driveIsFor(d, role))
+    .map((d) => ({
+      ...d,
+      rounds: d.rounds.filter((r) => roundIsFor(r, role)),
+    }));
+
   const following = Boolean(
     await db.bookmark.findUnique({
       where: { userId_companyId: { userId: user.id, companyId: company.id } },
       select: { id: true },
     }),
   );
-  const roles = [...new Set(drives.flatMap((d) => d.roles))];
-  const ctc = [
-    ...new Set(drives.flatMap((d) => (d.ctcBand ? [d.ctcBand] : []))),
+  const unique = (values: (string | null)[]) => [
+    ...new Set(values.filter((v): v is string => Boolean(v))),
   ];
-  const eligibility = [
-    ...new Set(drives.flatMap((d) => (d.eligibility ? [d.eligibility] : []))),
-  ];
+  const ctc = unique(drives.map((d) => d.ctcBand));
+  const eligibility = unique(drives.map((d) => d.eligibility));
+  const topics = mostAsked(
+    drives.flatMap((d) => d.rounds.flatMap((r) => r.topics)),
+  );
+
+  const href = (y: number, r: string | null) => {
+    const p = new URLSearchParams({ year: String(y) });
+    if (r) p.set("role", slugify(r));
+    return `/companies/${company.slug}?${p}`;
+  };
 
   return (
     <>
@@ -91,7 +121,7 @@ async function Company({
             {company.years.map((y) => (
               <Link
                 key={y}
-                href={`/companies/${company.slug}?year=${y}`}
+                href={href(y, role)}
                 scroll={false}
                 aria-current={y === year ? "page" : undefined}
                 className={`mr-7 flex min-h-12.5 items-center border-b-3 px-0.5 font-bold no-underline ${
@@ -107,8 +137,36 @@ async function Company({
         </div>
       </section>
 
-      <div className="wrap flex flex-wrap gap-14 pt-11 pb-16">
+      <div className="wrap flex flex-wrap gap-14 pt-9 pb-16">
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-10">
+          {roles.length > 1 && (
+            <div className="flex flex-col gap-2.5">
+              <span id="role-label" className="lbl">
+                {roles.length} roles in {year} · showing rounds for
+              </span>
+              <nav
+                aria-labelledby="role-label"
+                className="flex flex-wrap gap-2"
+              >
+                {roles.map((r) => (
+                  <Link
+                    key={r}
+                    href={href(year, r)}
+                    scroll={false}
+                    aria-current={r === role ? "page" : undefined}
+                    className={`flex min-h-11 items-center border px-4 text-[15px] font-bold no-underline ${
+                      r === role
+                        ? "border-charcoal bg-charcoal text-white hover:text-white"
+                        : "border-line-strong bg-white text-charcoal hover:border-charcoal hover:text-charcoal"
+                    }`}
+                  >
+                    {r}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          )}
+
           {drives.map((drive) => (
             <section
               key={drive.id}
@@ -116,7 +174,8 @@ async function Company({
               className="flex flex-col"
             >
               <h2 id={`d-${drive.id}`} className="mb-2 text-[26px] font-bold">
-                {driveLabel(year, drive.sequence, drives.length)} drive · rounds
+                {driveLabel(year, drive.sequence, drivesThisYear.length)} drive
+                · {roles.length > 1 && role ? `${role} rounds` : "rounds"}
               </h2>
               {drive.name && (
                 <p className="-mt-1 mb-2 text-ink-2">{drive.name}</p>
@@ -126,24 +185,17 @@ async function Company({
                   The CDC has not added the rounds for this drive yet.
                 </p>
               )}
-              {drive.rounds.map((r) => (
+              {drive.rounds.map((r, i) => (
                 <article
                   key={r.id}
                   className="grid grid-cols-[48px_minmax(0,1fr)] gap-x-4 gap-y-2 border-t border-line py-7 sm:grid-cols-[72px_minmax(0,1fr)] sm:gap-x-5"
                 >
                   <span className="text-[32px] leading-none font-bold text-crimson sm:text-[40px]">
-                    {String(r.order).padStart(2, "0")}
+                    {String(i + 1).padStart(2, "0")}
                   </span>
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 className="flex flex-wrap items-baseline gap-x-3 text-[22px] font-bold">
-                        {r.name}
-                        {drive.roles.length > 1 && r.roles.length > 0 && (
-                          <span className="text-xs font-bold tracking-[0.08em] text-ink-2 uppercase">
-                            For {r.roles.join(", ")}
-                          </span>
-                        )}
-                      </h3>
+                      <h3 className="text-[22px] font-bold">{r.name}</h3>
                       <span className="text-sm text-ink-3">
                         {fullDate(r.date)}
                       </span>
@@ -209,9 +261,9 @@ async function Company({
           </h2>
           <dl className="flex flex-col gap-3.5">
             <div>
-              <dt className="lbl">Roles</dt>
+              <dt className="lbl">{roles.length > 1 ? "Role" : "Roles"}</dt>
               <dd className="font-medium">
-                {roles.length ? roles.join(", ") : "Not shared yet"}
+                {roles.length > 1 ? role : roles.join(", ") || "Not shared yet"}
               </dd>
             </div>
             <div>
@@ -247,6 +299,19 @@ async function Company({
       </div>
     </>
   );
+}
+
+// The 4 topics that come up most often in these rounds' questions.
+function mostAsked(topics: { name: string; slug: string }[]) {
+  const counts = new Map<string, { name: string; slug: string; n: number }>();
+  for (const t of topics) {
+    const entry = counts.get(t.slug) ?? { ...t, n: 0 };
+    entry.n += 1;
+    counts.set(t.slug, entry);
+  }
+  return [...counts.values()]
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
+    .slice(0, 4);
 }
 
 function CompanySkeleton() {

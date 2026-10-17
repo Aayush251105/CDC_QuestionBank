@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  driveIsFor,
   driveLabel,
   driveSegment,
   parseDriveSegment,
+  pickRole,
+  roundIsFor,
   roundRoles,
+  rolesOf,
 } from "./drives";
 
 describe("driveLabel", () => {
@@ -38,5 +42,33 @@ describe("roundRoles", () => {
       "SDE I",
     ]);
     expect(roundRoles(["SDE I"], ["SDE intern", "SDE I"])).toEqual(["SDE I"]);
+  });
+});
+
+describe("role filter", () => {
+  const slug = (r: string) => r.toLowerCase().replace(/\s+/g, "-");
+  const drives = [
+    { roles: ["SDE intern", "SDE I"] },
+    { roles: ["SDE I", "Data analyst"] },
+  ];
+
+  it("lists each role once, in order", () => {
+    expect(rolesOf(drives)).toEqual(["SDE intern", "SDE I", "Data analyst"]);
+  });
+
+  it("picks the role from the URL, else the first", () => {
+    const roles = rolesOf(drives);
+    expect(pickRole(roles, "sde-i", slug)).toBe("SDE I");
+    expect(pickRole(roles, "nope", slug)).toBe("SDE intern");
+    expect(pickRole(roles, undefined, slug)).toBe("SDE intern");
+    expect(pickRole([], "sde-i", slug)).toBeNull();
+  });
+
+  it("keeps shared rounds for every role and role rounds for theirs", () => {
+    expect(roundIsFor({ roles: [] }, "SDE I")).toBe(true);
+    expect(roundIsFor({ roles: ["SDE I"] }, "SDE I")).toBe(true);
+    expect(roundIsFor({ roles: ["SDE intern"] }, "SDE I")).toBe(false);
+    expect(driveIsFor(drives[0], "Data analyst")).toBe(false);
+    expect(driveIsFor(drives[1], "Data analyst")).toBe(true);
   });
 });

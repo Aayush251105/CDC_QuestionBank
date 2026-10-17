@@ -4,7 +4,7 @@ import { db } from "@/server/db";
 import { visibleDrive } from "./visibility";
 
 // One company with its visible drives, rounds, question counts and the
-// most-asked topics per year. Null when the company is hidden, unverified
+// topics of each round's questions. Null when the company is hidden, unverified
 // or has nothing to show.
 export async function getCompanyDetail(slug: string) {
   "use cache";
@@ -59,28 +59,6 @@ export async function getCompanyDetail(slug: string) {
   if (!company || company.drives.length === 0) return null;
 
   const years = [...new Set(company.drives.map((d) => d.year))];
-  const topicsByYear = new Map<number, { name: string; slug: string }[]>();
-  for (const year of years) {
-    const counts = new Map<string, { name: string; slug: string; n: number }>();
-    for (const d of company.drives.filter((x) => x.year === year)) {
-      for (const r of d.rounds) {
-        for (const q of r.questions) {
-          for (const { tag } of q.tags) {
-            const t = counts.get(tag.slug) ?? { ...tag, n: 0 };
-            t.n += 1;
-            counts.set(tag.slug, t);
-          }
-        }
-      }
-    }
-    topicsByYear.set(
-      year,
-      [...counts.values()]
-        .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
-        .slice(0, 4)
-        .map(({ name, slug }) => ({ name, slug })),
-    );
-  }
 
   return {
     id: company.id,
@@ -104,8 +82,9 @@ export async function getCompanyDetail(slug: string) {
         durationMin: r.durationMin,
         roles: r.roles,
         questions: r._count.questions,
+        // One entry per tagged question, for "Most asked" per role.
+        topics: r.questions.flatMap((q) => q.tags.map((t) => t.tag)),
       })),
     })),
-    topicsByYear,
   };
 }
