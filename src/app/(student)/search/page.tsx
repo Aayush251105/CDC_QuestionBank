@@ -14,6 +14,7 @@ import {
   PAGE_SIZE,
   parseHeadline,
   parseSearchFilters,
+  ROUND_TYPES as SEARCH_ROUND_TYPES,
   searchHref,
   type SearchFilters,
 } from "@/lib/search";
@@ -31,6 +32,7 @@ const TYPE_ORDER: QuestionType[] = [
   "SQL",
   "APTITUDE",
   "WRITTEN",
+  "OTHER",
 ];
 
 // Page 07. Every filter lives in the URL so Back restores it and a search
@@ -181,7 +183,7 @@ async function Search({
               label="Round"
               value={f.round?.toLowerCase()}
               any="Any round"
-              options={(["OA", "TECHNICAL", "HR", "GD"] as const).map((r) => [
+              options={SEARCH_ROUND_TYPES.map((r) => [
                 r.toLowerCase(),
                 roundTypeLabel[r],
               ])}

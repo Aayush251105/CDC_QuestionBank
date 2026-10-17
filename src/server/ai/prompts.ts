@@ -41,14 +41,14 @@ STEP 2. Write each question out properly.
 - Keep [unclear] markers where you cannot tell what was meant.
 
 Fields for each question:
-- type: CODING (write a program or algorithm), APTITUDE (quantitative, logical or verbal reasoning, with or without options), MCQ (a technical or work-style question answered by picking an option), SQL (write a database query) or WRITTEN (essay, email, design or other written answer).
+- type: CODING (write a program or algorithm), APTITUDE (quantitative, logical or verbal reasoning, with or without options), MCQ (a technical or work-style question answered by picking an option), SQL (write a database query), WRITTEN (essay, email, design or other written answer) or OTHER (anything that fits none of these, e.g. a puzzle to solve aloud or a practical task).
 - title: a short plain title, at most 10 words.
 - original: the part of the source this question came from, copied unchanged (leave out the instructions you dropped).
 - cleaned: the full question in markdown, as described above. Use \`code\` for variables. Never put the answer options in cleaned; they go only in options.
 - options: the answer choices from the source, keys A, B, C... in the order given. Empty list if none.
 - answer: the correct option key or answer text, only if the student wrote it (even tentatively, like "ans a i think"); otherwise "".
 - aiAdded: the names of the parts you wrote yourself rather than took from the source, e.g. "Input format", "Output format", "Constraints", "Example", "Table schema", "Parts to answer", "Wording". "Wording" means you added details or assumptions to the statement itself. Leave it empty if you only fixed spelling, grammar and layout.
-- topics: at most 3 topics from the allowed list that clearly fit this question. "Core engineering" means mechanical, civil or electrical engineering, never computer science. "Work style and behaviour" is only for behavioural or HR questions about how the candidate acts at work. Use an empty list rather than a poor fit.
+- topics: at most 3 topics from the allowed list that clearly fit this question. "Core engineering" means mechanical, civil or electrical engineering, never computer science. "Work style and behaviour" is only for behavioural or HR questions about how the candidate acts at work. "System design" is for designing systems, services, APIs or their data at scale. If no specific topic fits, use ["Other"]; never pick a poor fit.
 - difficulty: EASY, MEDIUM or HARD, your best estimate for a final-year student.
 
 Keep half-remembered questions too ("there was one about graphs with k stops"): complete them only as far as the source supports, and list what you added. If the source contains no questions, return an empty list. Never invent a question that is not in the source.`;

@@ -84,7 +84,13 @@ export function parseUnlistedDrive(
 
 // ---------- S2: round details ----------
 
-export const ROUND_TYPES: RoundType[] = ["OA", "TECHNICAL", "HR", "GD"];
+export const ROUND_TYPES: RoundType[] = [
+  "OA",
+  "TECHNICAL",
+  "HR",
+  "GD",
+  "OTHER",
+];
 
 export type RoundDetails = {
   round: { kind: "existing"; id: string } | { kind: "new"; type: RoundType };

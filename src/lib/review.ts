@@ -7,7 +7,14 @@ import type {
 } from "@/generated/prisma/enums";
 import { MAX_QUESTIONS } from "./aiQuestions";
 
-const TYPES: QuestionType[] = ["CODING", "MCQ", "APTITUDE", "SQL", "WRITTEN"];
+const TYPES: QuestionType[] = [
+  "CODING",
+  "MCQ",
+  "APTITUDE",
+  "SQL",
+  "WRITTEN",
+  "OTHER",
+];
 const DIFFICULTIES: Difficulty[] = ["EASY", "MEDIUM", "HARD"];
 const MAX_TEXT = 8000;
 const MAX_OPTIONS = 6;

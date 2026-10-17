@@ -96,3 +96,11 @@ describe("takeTypeWords", () => {
     });
   });
 });
+
+describe("Other as a filter", () => {
+  it("accepts type=other and round=other", () => {
+    const f = parseSearchFilters({ type: "other", round: "other" });
+    expect(f.types).toEqual(["OTHER"]);
+    expect(f.round).toBe("OTHER");
+  });
+});

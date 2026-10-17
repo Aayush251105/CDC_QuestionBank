@@ -106,6 +106,7 @@ enum RoundType {
   TECHNICAL
   HR
   GD
+  OTHER
 }
 
 model Round {
@@ -245,6 +246,7 @@ enum QuestionType {
   APTITUDE
   SQL
   WRITTEN
+  OTHER // anything that fits none of the above
 }
 
 enum Difficulty {

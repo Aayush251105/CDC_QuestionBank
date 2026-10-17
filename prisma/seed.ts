@@ -57,9 +57,13 @@ const TAG_GROUPS: [string, string[]][] = [
       "DBMS theory",
       "C and C++ output",
       "Computer networks",
+      "System design",
     ],
   ],
-  ["Other", ["Work style and behaviour", "Essay writing", "Core engineering"]],
+  [
+    "Other",
+    ["Work style and behaviour", "Essay writing", "Core engineering", "Other"],
+  ],
 ];
 
 // ---------- Companies (03-Companies) ----------
@@ -782,8 +786,11 @@ async function main() {
   const tagId = new Map<string, string>();
   for (const [groupOrder, [group, names]] of TAG_GROUPS.entries()) {
     for (const name of names) {
-      const tag = await db.tag.create({
-        data: { name, slug: slugify(name), group, groupOrder },
+      // Upsert: a migration may already have added some topics.
+      const tag = await db.tag.upsert({
+        where: { name },
+        update: {},
+        create: { name, slug: slugify(name), group, groupOrder },
       });
       tagId.set(name, tag.id);
     }

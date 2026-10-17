@@ -12,6 +12,7 @@ export const questionTypeLabel: Record<QuestionType, string> = {
   APTITUDE: "Aptitude",
   SQL: "SQL",
   WRITTEN: "Written",
+  OTHER: "Other",
 };
 
 export const difficultyLabel: Record<Difficulty, string> = {
@@ -25,6 +26,7 @@ export const roundTypeLabel: Record<RoundType, string> = {
   TECHNICAL: "Technical interview",
   HR: "HR interview",
   GD: "Group discussion",
+  OTHER: "Other round",
 };
 
 export function plural(n: number, one: string, many = `${one}s`) {

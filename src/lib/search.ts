@@ -5,9 +5,9 @@ import type {
   RoundType,
 } from "@/generated/prisma/enums";
 
-const TYPES = ["CODING", "MCQ", "APTITUDE", "SQL", "WRITTEN"] as const;
+const TYPES = ["CODING", "MCQ", "APTITUDE", "SQL", "WRITTEN", "OTHER"] as const;
 const DIFFICULTIES = ["EASY", "MEDIUM", "HARD"] as const;
-const ROUND_TYPES = ["OA", "TECHNICAL", "HR", "GD"] as const;
+export const ROUND_TYPES = ["OA", "TECHNICAL", "HR", "GD", "OTHER"] as const;
 export const PAGE_SIZE = 20;
 
 export type SearchSort = "best" | "newest" | "most";
