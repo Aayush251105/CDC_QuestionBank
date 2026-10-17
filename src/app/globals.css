@@ -33,23 +33,26 @@
   --shadow-*: initial;
 }
 
-body {
-  background: var(--color-white);
-  color: var(--color-charcoal);
-  font-family: var(--font-sans);
-  line-height: 1.55;
-}
+/* In the base layer so Tailwind classes (e.g. text-white on a link) win. */
+@layer base {
+  body {
+    background: var(--color-white);
+    color: var(--color-charcoal);
+    font-family: var(--font-sans);
+    line-height: 1.55;
+  }
 
-a {
-  color: var(--color-crimson);
-}
-a:hover {
-  color: var(--color-crimson-dark);
-}
+  a {
+    color: var(--color-crimson);
+  }
+  a:hover {
+    color: var(--color-crimson-dark);
+  }
 
-:focus-visible {
-  outline: 2px solid var(--color-charcoal);
-  outline-offset: 3px;
+  :focus-visible {
+    outline: 2px solid var(--color-charcoal);
+    outline-offset: 3px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -58,5 +61,33 @@ a:hover {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shared pieces from the designs (.btn, .btn2, .eyebrow, .wrap, .lbl) */
+@layer components {
+  .wrap {
+    @apply mx-auto w-full max-w-295 px-6;
+  }
+  .eyebrow {
+    @apply text-[13px] font-bold tracking-[0.14em] text-crimson uppercase;
+  }
+  .lbl {
+    @apply text-xs font-bold tracking-[0.08em] text-ink-3 uppercase;
+  }
+  .btn-primary {
+    @apply inline-flex min-h-11.5 cursor-pointer items-center justify-center gap-2 border border-crimson bg-crimson px-5.5 text-[15px] font-bold text-white no-underline hover:border-crimson-dark hover:bg-crimson-dark hover:text-white;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 border border-charcoal bg-transparent px-4 text-sm font-bold text-charcoal no-underline hover:bg-charcoal hover:text-white;
+  }
+}
+
+@keyframes top-bar {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(0.85);
   }
 }

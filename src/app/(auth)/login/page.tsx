@@ -21,13 +21,13 @@ const domain =
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
-    <div className="flex min-h-screen flex-wrap">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <Suspense>
         <RedirectIfSignedIn />
       </Suspense>
 
-      <section className="flex flex-[1_1_420px] flex-col justify-between gap-12 bg-charcoal px-6 py-12 text-cream sm:px-14">
-        <Wordmark tone="light" />
+      <section className="flex flex-col justify-between gap-12 bg-charcoal px-6 py-12 text-cream sm:px-14 lg:flex-1">
+        <Wordmark tone="light" title="Career Development Centre" />
         <div className="flex max-w-130 flex-col gap-4.5">
           <p className="text-[13px] font-bold tracking-[0.14em] text-amber uppercase">
             Placement Question Bank
@@ -45,7 +45,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         </Suspense>
       </section>
 
-      <main className="flex flex-[1_1_420px] items-center justify-center px-6 py-12 sm:px-8">
+      <main className="flex flex-auto items-start justify-center px-6 py-12 sm:px-8 lg:flex-1 lg:items-center">
         <div className="flex w-full max-w-100 flex-col gap-6">
           <div className="flex flex-col gap-2">
             <p className="text-[13px] font-bold tracking-[0.14em] text-crimson uppercase">
