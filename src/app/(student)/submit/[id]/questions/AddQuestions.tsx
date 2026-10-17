@@ -356,7 +356,7 @@ export function AddQuestions({
         </Link>
         <span className="flex-auto text-right text-sm text-ink-3">
           {working
-            ? "Sorting your questions… this can take up to a minute"
+            ? "Writing out your questions… about half a minute per photo"
             : done
               ? `${done} ${done === 1 ? "photo" : "photos"} read`
               : ""}

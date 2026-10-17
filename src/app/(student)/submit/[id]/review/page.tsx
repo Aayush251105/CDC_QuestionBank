@@ -18,6 +18,14 @@ type Props = PageProps<"/submit/[id]/review">;
 
 const TITLE = "Check the cleaned-up version";
 
+// RawQuestion.fields holds { answer?, aiAdded? } from the AI step.
+function aiAddedOf(fields: unknown): string[] {
+  const list = (fields as { aiAdded?: unknown } | null)?.aiAdded;
+  return Array.isArray(list)
+    ? list.filter((x): x is string => typeof x === "string")
+    : [];
+}
+
 // S4. The student compares the AI's tidy version with what they gave us,
 // fixes it, accepts the honour statement and submits.
 export default function ReviewStepPage(props: Props) {
@@ -69,6 +77,7 @@ async function ReviewStep({ params }: Props) {
           type: true,
           textOriginal: true,
           textCleaned: true,
+          fields: true,
           options: true,
           suggestedTags: true,
           suggestedDifficulty: true,
@@ -96,9 +105,10 @@ async function ReviewStep({ params }: Props) {
     <>
       <SubmitHeader step={4} title={TITLE} context={context}>
         <p className="max-w-180 text-ink-2">
-          We fixed grammar and layout and kept every number and condition.
-          Compare each question with what you gave us and correct anything that
-          changed the meaning.
+          We wrote each question out in full and kept every number and condition
+          you gave. Parts we filled in ourselves are marked AI added. Compare
+          each question with what you gave us and correct anything that is not
+          what the test asked.
         </p>
       </SubmitHeader>
       <div className="wrap pt-9 pb-16">
@@ -114,6 +124,7 @@ async function ReviewStep({ params }: Props) {
               ? `Read from photo ${q.scanPageNo}`
               : "Typed by you",
             original: q.textOriginal,
+            aiAdded: aiAddedOf(q.fields),
             type: q.type,
             difficulty: q.suggestedDifficulty ?? "MEDIUM",
             cleaned: q.textCleaned ?? q.textOriginal,

@@ -7,8 +7,8 @@ import {
   questionsSchema,
   splitWithoutAi,
 } from "@/lib/aiQuestions";
-import { aiConfig, chatJson } from "./groq";
-import { READ_PHOTO, STRUCTURE } from "./prompts";
+import { aiConfig, chatJson, chatText } from "./groq";
+import { NO_TEXT, READ_PHOTO, STRUCTURE } from "./prompts";
 
 // Every LLM call in the app goes through these functions (CLAUDE.md
 // section 7). Without GROQ_API_KEY they fall back to a stub so the submit
@@ -27,18 +27,12 @@ export async function readPhoto(
   const { key, visionModel } = aiConfig();
   // No key: nothing can be read; the page says so and offers typing instead.
   if (!key) return { readable: false, text: "" };
-  const result = await chatJson<PhotoResult>({
+  const { text: reply, cut } = await chatText({
     name: "read_photo",
     model: visionModel,
-    // One page of notes is a few hundred tokens; stays under the free
+    // A dense printed page is about 500 tokens; stays under the free
     // plan's 1000 output tokens per minute for this model.
     maxTokens: 900,
-    schema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["readable", "text"],
-      properties: { readable: { type: "boolean" }, text: { type: "string" } },
-    },
     messages: [
       { role: "system", content: READ_PHOTO },
       {
@@ -55,9 +49,16 @@ export async function readPhoto(
       },
     ],
   });
-  const text =
-    typeof result.text === "string" ? result.text.trim().slice(0, 12000) : "";
-  return { readable: Boolean(result.readable) && text.length > 0, text };
+  const text = reply.trim().slice(0, 12000);
+  if (!text || text.includes(NO_TEXT)) return { readable: false, text: "" };
+  return {
+    readable: true,
+    // Shown to the student under "See the text we read" and kept for the
+    // structuring step, so a cut-off page is never mistaken for a full one.
+    text: cut
+      ? `${text}\n[unclear: the rest of this page could not be read. Take a closer photo of it, or type it.]`
+      : text,
+  };
 }
 
 // One source of questions: the typed notes (photo null) or one photo's text.

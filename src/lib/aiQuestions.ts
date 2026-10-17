@@ -14,6 +14,7 @@ export type AiQuestion = {
   cleaned: string; // tidied markdown: grammar and layout only
   options: { key: string; text: string }[];
   answer: string; // only if the student wrote one
+  aiAdded: string[]; // parts the AI wrote itself ("Constraints", "Example")
   topics: string[]; // from our topic list
   difficulty: Difficulty;
   photo: number | null; // which photo it was read from; null if typed
@@ -39,6 +40,7 @@ export function questionsSchema(topicNames: string[]) {
             "cleaned",
             "options",
             "answer",
+            "aiAdded",
             "topics",
             "difficulty",
           ],
@@ -60,6 +62,7 @@ export function questionsSchema(topicNames: string[]) {
               },
             },
             answer: { type: "string" },
+            aiAdded: { type: "array", items: { type: "string" } },
             topics: {
               type: "array",
               items: { type: "string", enum: topicNames },
@@ -114,6 +117,13 @@ export function normaliseAiQuestions(
       cleaned,
       options,
       answer: str(q.answer, 300),
+      aiAdded: Array.isArray(q.aiAdded)
+        ? [
+            ...new Set(
+              q.aiAdded.map((a) => str(a, 40)).filter((a) => a.length > 0),
+            ),
+          ].slice(0, 8)
+        : [],
       topics: Array.isArray(q.topics)
         ? [
             ...new Set(
@@ -219,6 +229,7 @@ export function splitWithoutAi(text: string): AiQuestion[] {
       cleaned,
       options,
       answer: "",
+      aiAdded: [],
       topics: [],
       difficulty: "MEDIUM" as Difficulty,
       photo: null,

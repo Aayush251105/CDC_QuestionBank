@@ -10,6 +10,7 @@ import { saveReview, submitForReview } from "@/server/actions/review";
 type Item = ReviewQuestion & {
   title: string;
   source: string;
+  aiAdded: string[];
   original: string;
 };
 
@@ -186,6 +187,18 @@ export function ReviewForm({
                 you remember it.
               </div>
             )}
+            {q.aiAdded.length > 0 && (
+              <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-l-3 border-charcoal bg-grey-band px-4 py-3 text-[15px]">
+                <span className="border border-charcoal px-2 py-0.5 text-xs font-bold tracking-[0.06em] uppercase">
+                  AI added
+                </span>
+                <span>
+                  We wrote these parts ourselves:{" "}
+                  <strong>{q.aiAdded.join(", ")}</strong>. Check they match the
+                  test, and fix or delete them if not.
+                </span>
+              </p>
+            )}
             {emptyIds.includes(q.id) && (
               <p role="alert" className="text-[15px] font-bold text-crimson">
                 This question is empty. Write it or remove it.
@@ -205,7 +218,10 @@ export function ReviewForm({
                 </label>
                 <textarea
                   id={`c-${q.id}`}
-                  rows={8}
+                  rows={Math.min(
+                    28,
+                    Math.max(8, q.cleaned.split("\n").length + 1),
+                  )}
                   maxLength={8000}
                   value={q.cleaned}
                   onChange={(e) => edit(q.id, { cleaned: e.target.value })}

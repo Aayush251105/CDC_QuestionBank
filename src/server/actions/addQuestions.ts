@@ -228,7 +228,12 @@ export async function prepareReview(submissionId: string) {
           textOriginal: q.original,
           textCleaned: q.cleaned,
           options: q.options,
-          fields: q.answer ? { answer: q.answer } : undefined,
+          // What the student wrote as the answer, and the parts the AI wrote
+          // itself (shown as "AI added" on review; CLAUDE.md 2a.11).
+          fields: {
+            ...(q.answer && { answer: q.answer }),
+            aiAdded: q.aiAdded,
+          },
           suggestedTags: q.topics,
           suggestedDifficulty: q.difficulty,
           scanPageNo: q.photo,

@@ -36,6 +36,7 @@ describe("normaliseAiQuestions", () => {
               { key: "c", text: "" },
             ],
             answer: "",
+            aiAdded: ["Example", "", "Example", 7],
             topics: ["Graphs", "Made up topic", "Graphs"],
             difficulty: "EASY",
           },
@@ -54,8 +55,10 @@ describe("normaliseAiQuestions", () => {
         { key: "B", text: "2" },
       ],
       topics: ["Graphs"],
+      aiAdded: ["Example"],
     });
     expect(out[1]).toMatchObject({
+      aiAdded: [],
       type: "CODING",
       difficulty: "MEDIUM",
       title: "x = ?",
