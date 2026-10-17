@@ -97,3 +97,12 @@
     @apply min-h-13 w-full border border-line-strong bg-white px-4 text-[17px] text-charcoal focus:border-charcoal focus:shadow-[0_0_0_1px_var(--color-charcoal)] focus:outline-none;
   }
 }
+
+/* Code shows exactly what was typed: "<=" stays two characters. */
+@layer base {
+  code,
+  pre,
+  .font-mono {
+    font-variant-ligatures: none;
+  }
+}

@@ -258,9 +258,16 @@ model RawQuestion {
   section             String?
   type                QuestionType
   title               String?
+  // Markdown built from "fields" (typed) or read from a scan; what cleanup
+  // and the CDC work from.
   textOriginal        String
   textCleaned         String?
+  // The S3a form as the student filled it in (statement, constraints,
+  // samples, options, ...). Kept so Back shows exactly what was typed.
+  fields              Json?
   options             Json? // MCQ options: [{ key: "A", text: "..." }]
+  difficultyFelt      Difficulty? // "How hard did it feel?" from the student
+  notes               String? // notes for other students
   suggestedTags       String[]
   suggestedDifficulty Difficulty?
   scanPageNo          Int? // set when read from an upload
