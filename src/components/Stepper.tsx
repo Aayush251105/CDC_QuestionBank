@@ -19,7 +19,7 @@ export function Stepper({ current }: { current: 1 | 2 | 3 | 4 }) {
             className="flex flex-col gap-2"
           >
             <span
-              className={`h-1 ${done || now ? "bg-crimson" : "bg-[#D4D4D3]"}`}
+              className={`h-1 ${done || now ? "bg-crimson" : "bg-disabled"}`}
             />
             <span
               className={`text-sm ${now ? "font-bold text-crimson" : done ? "text-charcoal" : "text-ink-3"}`}
@@ -38,17 +38,24 @@ export function Stepper({ current }: { current: 1 | 2 | 3 | 4 }) {
 export function SubmitHeader({
   step,
   title,
+  context,
+  children,
 }: {
   step: 1 | 2 | 3 | 4;
   title: string;
+  context?: string; // "Amazon 2025 online assessment"
+  children?: React.ReactNode; // a line of text under the title
 }) {
   return (
     <section className="border-b border-line bg-grey-band">
       <div className="wrap flex flex-col gap-2.5 pt-9 pb-7">
-        <p className="eyebrow">Submit an OA · Step {step} of 4</p>
+        <p className="eyebrow">
+          Submit an OA · Step {step} of 4{context && ` · ${context}`}
+        </p>
         <h1 className="text-[30px] leading-[1.15] font-bold sm:text-[38px]">
           {title}
         </h1>
+        {children}
         <Stepper current={step} />
       </div>
     </section>

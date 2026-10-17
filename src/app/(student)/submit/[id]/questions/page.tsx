@@ -39,6 +39,7 @@ async function QuestionsStep({ params }: Props) {
       status: true,
       roundId: true,
       rawText: true,
+      _count: { select: { rawQuestions: true } },
       scanPages: {
         orderBy: { pageNo: "asc" },
         select: {
@@ -68,6 +69,7 @@ async function QuestionsStep({ params }: Props) {
       }))}
       maxPages={Number(process.env.UPLOAD_MAX_PAGES) || 10}
       photoReadingOn={aiEnabled()}
+      alreadySorted={s._count.rawQuestions > 0}
     />
   );
 }

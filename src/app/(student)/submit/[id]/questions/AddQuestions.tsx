@@ -75,12 +75,14 @@ export function AddQuestions({
   initialPages,
   maxPages,
   photoReadingOn,
+  alreadySorted,
 }: {
   submissionId: string;
   initialText: string;
   initialPages: PhotoPage[];
   maxPages: number;
   photoReadingOn: boolean;
+  alreadySorted: boolean; // the review step already has questions
 }) {
   const [text, setText] = useState(initialText);
   const [saveState, setSaveState] = useState<
@@ -331,6 +333,15 @@ export function AddQuestions({
         )}
       </section>
 
+      {alreadySorted && (
+        <p className="border-l-3 border-charcoal bg-grey-band px-4 py-3.5 text-[15px]">
+          Your questions are already sorted. Continuing sorts them again and
+          replaces the changes you made on the review step.{" "}
+          <Link href={`/submit/${submissionId}/review`} className="font-bold">
+            Go to review without sorting again
+          </Link>
+        </p>
+      )}
       {error && (
         <p
           role="alert"
