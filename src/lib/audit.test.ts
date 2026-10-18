@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditSentence, auditTag, auditWhen } from "./audit";
+import { AUDIT_GROUPS, auditSentence, auditTag, auditWhen } from "./audit";
 
 describe("audit log labels", () => {
   it("names known actions and falls back for others", () => {
@@ -38,5 +38,14 @@ describe("audit log labels", () => {
     expect(auditWhen(new Date("2025-08-20T05:35:00Z"), now)).toBe(
       "20 Aug, 11:05",
     );
+  });
+});
+
+describe("audit groups", () => {
+  it("puts every labelled action in exactly one group", () => {
+    const all = Object.values(AUDIT_GROUPS).flatMap((g) => [...g.actions]);
+    expect(new Set(all).size).toBe(all.length);
+    for (const action of all)
+      expect(auditTag(action).tag).not.toBe(action.replace(/_/g, " "));
   });
 });

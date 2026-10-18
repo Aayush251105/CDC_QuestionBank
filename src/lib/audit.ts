@@ -126,3 +126,47 @@ export function auditWhen(date: Date, now: Date = new Date()): string {
   }
   return `${fmt(date, { day: "numeric", month: "short" })}, ${time}`;
 }
+
+// The "Action type" filter on A14.
+export const AUDIT_GROUPS = {
+  pin: {
+    label: "PIN",
+    actions: [
+      "pin_generate",
+      "pin_regenerate",
+      "pin_view",
+      "pin_off",
+      "pin_on",
+    ],
+  },
+  review: {
+    label: "Review decisions",
+    actions: ["approved", "merged", "rejected"],
+  },
+  questions: {
+    label: "Published questions",
+    actions: ["question_edit", "unpublish", "republish"],
+  },
+  shortlist: { label: "Shortlists", actions: ["shortlist_upload"] },
+  drives: {
+    label: "Drives and requests",
+    actions: [
+      "drive_create",
+      "drive_edit",
+      "drive_open",
+      "drive_close",
+      "request_attach",
+      "request_decline",
+    ],
+  },
+  companies: {
+    label: "Companies",
+    actions: ["company_create", "company_edit", "company_merge"],
+  },
+  people: {
+    label: "Students, roles and settings",
+    actions: ["block", "unblock", "role_change", "setting_change"],
+  },
+} as const;
+
+export type AuditGroup = keyof typeof AUDIT_GROUPS;

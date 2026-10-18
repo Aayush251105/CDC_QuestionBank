@@ -19,7 +19,7 @@ export async function getSettings(): Promise<Settings> {
   const rows = await db.setting.findMany();
   const settings = { ...SETTING_DEFAULTS };
   for (const row of rows) {
-    if (!(row.key in settings)) continue;
+    if (!Object.hasOwn(SETTING_DEFAULTS, row.key)) continue;
     const key = row.key as SettingKey;
     if (typeof row.value === typeof SETTING_DEFAULTS[key]) {
       (settings as Record<SettingKey, unknown>)[key] = row.value;

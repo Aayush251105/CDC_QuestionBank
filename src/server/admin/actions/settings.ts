@@ -97,7 +97,8 @@ export async function saveSetting(
   value: boolean | number | string,
 ): Promise<Result> {
   const me = await requireSuperAdmin();
-  if (!(key in SETTING_DEFAULTS)) return { error: "Unknown setting." };
+  if (!Object.hasOwn(SETTING_DEFAULTS, key))
+    return { error: "Unknown setting." };
   if (typeof value !== typeof SETTING_DEFAULTS[key])
     return { error: "Check the value." };
   if (key === "pinWindowDays" && ![7, 14, 30].includes(value as number)) {
