@@ -13,6 +13,7 @@ import {
   RoundType,
   SubmissionStatus,
 } from "../src/generated/prisma/client";
+import { reviewedMessage } from "../src/lib/notifications";
 import { formatPin } from "../src/lib/pin";
 import { slugify } from "../src/lib/slug";
 
@@ -57,9 +58,13 @@ const TAG_GROUPS: [string, string[]][] = [
       "DBMS theory",
       "C and C++ output",
       "Computer networks",
+      "System design",
     ],
   ],
-  ["Other", ["Work style and behaviour", "Essay writing", "Core engineering"]],
+  [
+    "Other",
+    ["Work style and behaviour", "Essay writing", "Core engineering", "Other"],
+  ],
 ];
 
 // ---------- Companies (03-Companies) ----------
@@ -782,8 +787,11 @@ async function main() {
   const tagId = new Map<string, string>();
   for (const [groupOrder, [group, names]] of TAG_GROUPS.entries()) {
     for (const name of names) {
-      const tag = await db.tag.create({
-        data: { name, slug: slugify(name), group, groupOrder },
+      // Upsert: a migration may already have added some topics.
+      const tag = await db.tag.upsert({
+        where: { name },
+        update: {},
+        create: { name, slug: slugify(name), group, groupOrder },
       });
       tagId.set(name, tag.id);
     }
@@ -800,6 +808,7 @@ async function main() {
 
   // Drives and rounds
   const roundId = new Map<string, string>();
+  const driveOfRound = new Map<string, string>();
   const visitsSoFar = new Map<string, number>();
   for (const dr of DRIVES) {
     const visitKey = `${dr.company}-${dr.year}`;
@@ -835,6 +844,7 @@ async function main() {
         },
       });
       roundId.set(r.key, round.id);
+      driveOfRound.set(r.key, drive.id);
     }
   }
 
@@ -1033,6 +1043,7 @@ async function main() {
     const sub = await db.submission.create({
       data: {
         userId: userId.get(s.user)!,
+        driveId: driveOfRound.get(s.round)!,
         roundId: roundId.get(s.round)!,
         enteredWithPin: true,
         status: s.status,
@@ -1093,7 +1104,12 @@ async function main() {
   await db.notification.create({
     data: {
       userId: aayush,
-      kind: "SUBMISSION_REVIEWED",
+      kind: "REVIEWED",
+      message: reviewedMessage({
+        company: "Amazon",
+        drive: "2025",
+        round: "Online assessment",
+      }),
       link: "/me/submissions",
     },
   });

@@ -2,15 +2,28 @@ import { Fragment } from "react";
 import { parseInline, parseMarkdown } from "@/lib/markdown";
 
 // Renders a question body. Text only ever becomes React text nodes.
-export function Markdown({ source }: { source: string }) {
+// A paragraph that is only bold ("**Constraints**") becomes a small heading.
+// size="lg" is the question page; "md" is the round page accordion.
+export function Markdown({
+  source,
+  size = "md",
+}: {
+  source: string;
+  size?: "md" | "lg";
+}) {
+  const lg = size === "lg";
   return (
-    <div className="flex flex-col gap-3.5">
+    <div
+      className={`flex flex-col ${lg ? "gap-4 text-[17px] leading-[1.75]" : "gap-3.5 leading-[1.7]"}`}
+    >
       {parseMarkdown(source).map((block, i) => {
         if (block.type === "code") {
           return (
             <pre
               key={i}
-              className="overflow-x-auto border-l-3 border-charcoal bg-grey-band px-4.5 py-4 font-mono text-[13px] leading-[1.7]"
+              className={`overflow-x-auto border-l-3 border-charcoal bg-grey-band font-mono leading-[1.7] ${
+                lg ? "px-5 py-4.5 text-sm" : "px-4.5 py-4 text-[13px]"
+              }`}
             >
               <code>{block.text}</code>
             </pre>
@@ -18,10 +31,7 @@ export function Markdown({ source }: { source: string }) {
         }
         if (block.type === "list") {
           return (
-            <ul
-              key={i}
-              className="flex list-disc flex-col gap-1 pl-5 leading-[1.7]"
-            >
+            <ul key={i} className="flex list-disc flex-col gap-1 pl-5">
               {block.items.map((item, j) => (
                 <li key={j}>
                   <InlineText text={item} />
@@ -30,8 +40,19 @@ export function Markdown({ source }: { source: string }) {
             </ul>
           );
         }
+        const heading = /^\*\*([^*]+)\*\*$/.exec(block.text.trim());
+        if (heading) {
+          return (
+            <p
+              key={i}
+              className="mt-2 text-sm font-bold tracking-widest uppercase"
+            >
+              {heading[1]}
+            </p>
+          );
+        }
         return (
-          <p key={i} className="leading-[1.7] whitespace-pre-line">
+          <p key={i} className="whitespace-pre-line">
             <InlineText text={block.text} />
           </p>
         );

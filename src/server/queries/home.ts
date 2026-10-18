@@ -71,7 +71,10 @@ export async function getOpenDrives(limit = 4) {
       sequence: true,
       roles: true,
       company: { select: { name: true, slug: true } },
-      rounds: { select: { _count: { select: { questions: true } } } },
+      rounds: {
+        where: { verified: true },
+        select: { _count: { select: { questions: true } } },
+      },
     },
   });
   // Visits per company and year, so a second visit shows as "2025 · B".
@@ -113,6 +116,7 @@ export async function getFollowedCompanies(userId: string) {
             where: visibleDrive,
             select: {
               rounds: {
+                where: { verified: true },
                 select: {
                   _count: {
                     select: {

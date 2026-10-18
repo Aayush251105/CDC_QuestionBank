@@ -20,3 +20,27 @@ export function studentStatus(status: SubmissionStatus): StudentStatus {
       return "Withdrawn";
   }
 }
+
+// Tabs on My submissions (page 10), in the URL as ?status=in-review.
+// Withdrawn submissions are not listed.
+export type SubmissionTab = "draft" | "in-review" | "reviewed";
+
+export const SUBMISSION_TABS: { key: SubmissionTab; label: StudentStatus }[] = [
+  { key: "draft", label: "Draft" },
+  { key: "in-review", label: "In review" },
+  { key: "reviewed", label: "Reviewed" },
+];
+
+export function tabOf(status: SubmissionStatus): SubmissionTab | null {
+  switch (studentStatus(status)) {
+    case "Draft":
+      return "draft";
+    case "Processing":
+    case "In review":
+      return "in-review";
+    case "Reviewed":
+      return "reviewed";
+    case "Withdrawn":
+      return null;
+  }
+}
