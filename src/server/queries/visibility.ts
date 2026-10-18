@@ -8,6 +8,13 @@ export const visibleDrive = {
   company: { hidden: false, verified: true },
 } satisfies Prisma.DriveWhereInput;
 
+// Questions a CDC admin has not unpublished (admin A09). Use it in every
+// question count too.
+export const liveQuestion = {
+  unpublishedAt: null,
+} satisfies Prisma.QuestionWhereInput;
+
 export const visibleQuestion = {
+  ...liveQuestion,
   round: { drive: visibleDrive },
 } satisfies Prisma.QuestionWhereInput;

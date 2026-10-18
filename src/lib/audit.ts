@@ -9,6 +9,7 @@ const ACTIONS: Record<string, { tag: string; tone: AuditTone; verb: string }> =
     merged: { tag: "Merged", tone: "pending", verb: "merged" },
     rejected: { tag: "Rejected", tone: "muted", verb: "rejected" },
     unpublish: { tag: "Unpublished", tone: "muted", verb: "unpublished" },
+    republish: { tag: "Republished", tone: "good", verb: "republished" },
     question_edit: { tag: "Edited", tone: "draft", verb: "edited" },
     drive_create: {
       tag: "Drive created",

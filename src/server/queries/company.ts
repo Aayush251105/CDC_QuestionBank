@@ -1,7 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/server/db";
-import { visibleDrive } from "./visibility";
+import { liveQuestion, visibleDrive } from "./visibility";
 
 // One company with its visible drives, rounds, question counts and the
 // topics of each round's questions. Null when the company is hidden, unverified
@@ -42,8 +42,9 @@ export async function getCompanyDetail(slug: string) {
               platform: true,
               durationMin: true,
               roles: true,
-              _count: { select: { questions: true } },
+              _count: { select: { questions: { where: liveQuestion } } },
               questions: {
+                where: liveQuestion,
                 select: {
                   tags: {
                     select: { tag: { select: { name: true, slug: true } } },

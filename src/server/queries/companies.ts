@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import type { CompanyListItem } from "@/lib/companies";
 import { db } from "@/server/db";
-import { visibleDrive } from "./visibility";
+import { liveQuestion, visibleDrive } from "./visibility";
 
 // Every company with at least one visible drive, with totals for the table.
 export async function getCompanyList(): Promise<CompanyListItem[]> {
@@ -27,7 +27,10 @@ export async function getCompanyList(): Promise<CompanyListItem[]> {
         select: {
           year: true,
           rounds: {
-            select: { date: true, _count: { select: { questions: true } } },
+            select: {
+              date: true,
+              _count: { select: { questions: { where: liveQuestion } } },
+            },
           },
         },
       },
