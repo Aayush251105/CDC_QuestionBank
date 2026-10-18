@@ -37,6 +37,7 @@ export async function getRoundDetail(
   const round = await db.round.findFirst({
     where: {
       slug: roundSlug,
+      verified: true,
       drive: {
         ...visibleDrive,
         year: visit.year,

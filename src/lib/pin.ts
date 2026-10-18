@@ -27,7 +27,7 @@ export function generatePin(): string {
 // The one rule for whether a PIN opens its drive: the drive is open and the
 // admin has the PIN switched on. A closed drive never accepts its PIN.
 export function pinOpensDrive(drive: {
-  status: "OPEN" | "CLOSED";
+  status: "DRAFT" | "OPEN" | "CLOSED";
   pinEnabled: boolean;
   submissionPin: string | null;
 }): boolean {

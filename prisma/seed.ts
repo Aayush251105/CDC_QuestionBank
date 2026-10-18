@@ -14,6 +14,7 @@ import {
   SubmissionStatus,
   VerificationTag,
 } from "../src/generated/prisma/client";
+import { reviewedMessage } from "../src/lib/notifications";
 import { formatPin } from "../src/lib/pin";
 import { slugify } from "../src/lib/slug";
 
@@ -58,9 +59,13 @@ const TAG_GROUPS: [string, string[]][] = [
       "DBMS theory",
       "C and C++ output",
       "Computer networks",
+      "System design",
     ],
   ],
-  ["Other", ["Work style and behaviour", "Essay writing", "Core engineering"]],
+  [
+    "Other",
+    ["Work style and behaviour", "Essay writing", "Core engineering", "Other"],
+  ],
 ];
 
 // ---------- Companies (03-Companies) ----------
@@ -783,8 +788,11 @@ async function main() {
   const tagId = new Map<string, string>();
   for (const [groupOrder, [group, names]] of TAG_GROUPS.entries()) {
     for (const name of names) {
-      const tag = await db.tag.create({
-        data: { name, slug: slugify(name), group, groupOrder },
+      // Upsert: a migration may already have added some topics.
+      const tag = await db.tag.upsert({
+        where: { name },
+        update: {},
+        create: { name, slug: slugify(name), group, groupOrder },
       });
       tagId.set(name, tag.id);
     }
@@ -802,6 +810,7 @@ async function main() {
   // Drives and rounds
   const roundId = new Map<string, string>();
   const driveOf = new Map<string, string>(); // round key -> drive id
+
   const visitsSoFar = new Map<string, number>();
   for (const dr of DRIVES) {
     const visitKey = `${dr.company}-${dr.year}`;
@@ -1105,6 +1114,7 @@ async function main() {
     const sub = await db.submission.create({
       data: {
         userId: userId.get(s.user)!,
+        driveId: driveOf.get(s.round)!,
         roundId: roundId.get(s.round)!,
         enteredWithPin: Boolean(pin),
         pinUsed: pin ?? null,
@@ -1193,7 +1203,12 @@ async function main() {
   await db.notification.create({
     data: {
       userId: aayush,
-      kind: "SUBMISSION_REVIEWED",
+      kind: "REVIEWED",
+      message: reviewedMessage({
+        company: "Amazon",
+        drive: "2025",
+        round: "Online assessment",
+      }),
       link: "/me/submissions",
     },
   });
@@ -1340,6 +1355,7 @@ async function main() {
   await db.submission.create({
     data: {
       userId: userId.get("khushi")!,
+      driveId: request.id,
       roundId: request.rounds[0].id,
       status: "PENDING_REVIEW",
       credit: true,

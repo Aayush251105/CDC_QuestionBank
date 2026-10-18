@@ -23,7 +23,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 // A06 Shortlist upload: upload the CSV, match columns, preview, import.
 // Below it, reminders for shortlisted students who have not submitted
-// (CLAUDE.md 2a.11).
+// (CLAUDE.md 2a.15).
 export default function ShortlistPage({
   params,
   searchParams,

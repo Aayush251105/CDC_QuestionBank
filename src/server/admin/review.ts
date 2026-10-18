@@ -2,7 +2,11 @@ import "server-only";
 import type { Prisma } from "@/generated/prisma/client";
 import type { Difficulty, QuestionType } from "@/generated/prisma/enums";
 import { driveTitle } from "@/lib/admin";
-import { duplicateGroups, normaliseTitle, reviewNotes } from "@/lib/review";
+import {
+  duplicateGroups,
+  normaliseTitle,
+  reviewNotes,
+} from "@/lib/adminReview";
 import { db } from "@/server/db";
 import { logAction } from "./audit";
 import { driveTitleSelect, pendingReview } from "./queries";
@@ -14,7 +18,7 @@ import { driveTitleSelect, pendingReview } from "./queries";
 export async function getReviewBatch(driveId: string) {
   const [submissions, published] = await Promise.all([
     db.submission.findMany({
-      where: { ...pendingReview, round: { driveId } },
+      where: { ...pendingReview, driveId },
       orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }],
       select: {
         id: true,
@@ -42,7 +46,7 @@ export async function getReviewBatch(driveId: string) {
     ...submissions.flatMap((s) =>
       s.rawQuestions.map((q) => ({
         title: q.title ?? q.textOriginal.slice(0, 80),
-        roundName: s.round.name,
+        roundName: s.round?.name ?? "",
         submissionId: s.id as string | null,
       })),
     ),
@@ -77,13 +81,13 @@ export async function getReviewBatch(driveId: string) {
       meta: [s.user.programme, s.user.branch, s.user.gradYear]
         .filter(Boolean)
         .join(" "),
-      round: s.round.name,
+      round: s.round?.name ?? "",
       questions: s.rawQuestions.length,
       viaPin: s.enteredWithPin,
       tag: s.verificationTag,
       notes: reviewNotes({
         tag: s.verificationTag,
-        roundOrder: s.round.order,
+        roundOrder: s.round?.order ?? 0,
         duplicates,
         unclear,
       }),
@@ -102,11 +106,11 @@ export async function drivesWithPending() {
   const pending = await db.submission.findMany({
     where: pendingReview,
     orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }],
-    select: { round: { select: { drive: { select: driveTitleSelect } } } },
+    select: { drive: { select: driveTitleSelect } },
   });
   const drives = new Map<string, { id: string; title: string; n: number }>();
   for (const p of pending) {
-    const d = p.round.drive;
+    const d = p.drive;
     const entry = drives.get(d.id) ?? { id: d.id, title: driveTitle(d), n: 0 };
     entry.n++;
     drives.set(d.id, entry);
@@ -149,7 +153,7 @@ export async function applyDecisions(
       credit: true,
       roundId: true,
       reviewStartedAt: true,
-      round: { select: { drive: { select: driveTitleSelect } } },
+      drive: { select: driveTitleSelect },
       rawQuestions: {
         select: {
           id: true,
@@ -164,7 +168,10 @@ export async function applyDecisions(
       },
     },
   });
-  const drive = sub.round.drive;
+  // Questions are published under the submission's round.
+  const roundId = sub.roundId;
+  if (!roundId) throw new Error("This submission has no round yet");
+  const drive = sub.drive;
   const tags = await tx.tag.findMany({ select: { id: true, name: true } });
   const tagIds = (names: string[]) => [
     ...new Set(
@@ -188,12 +195,12 @@ export async function applyDecisions(
 
     if (d.decision === "APPROVE") {
       const last = await tx.question.aggregate({
-        where: { roundId: sub.roundId },
+        where: { roundId },
         _max: { order: true },
       });
       const question = await tx.question.create({
         data: {
-          roundId: sub.roundId,
+          roundId,
           order: (last._max.order ?? 0) + 1,
           title,
           bodyMarkdown: (d.text ?? raw.textCleaned ?? raw.textOriginal).trim(),
@@ -249,12 +256,12 @@ export async function applyDecisions(
         });
       }
       // Asked again in another round: list it there too ("Where it was asked").
-      if (target.roundId !== sub.roundId) {
+      if (target.roundId !== roundId) {
         await tx.questionAppearance.upsert({
           where: {
-            questionId_roundId: { questionId: target.id, roundId: sub.roundId },
+            questionId_roundId: { questionId: target.id, roundId },
           },
-          create: { questionId: target.id, roundId: sub.roundId },
+          create: { questionId: target.id, roundId },
           update: {},
         });
       }

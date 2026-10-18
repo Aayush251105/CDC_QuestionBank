@@ -7,11 +7,13 @@ import { db } from "@/server/db";
 
 // What waits in the review queue: sent submissions on CDC drives from
 // students who are not blocked. Drive requests (unverified drives) are
-// handled from Drives > Requests instead.
+// handled from Drives > Requests instead. Review goes round by round, so a
+// submission whose round is not picked yet (S2) waits until it is.
 export const pendingReview = {
   status: "PENDING_REVIEW",
   user: { blockedAt: null },
-  round: { drive: { verified: true } },
+  roundId: { not: null },
+  drive: { verified: true },
 } satisfies Prisma.SubmissionWhereInput;
 
 // The live count next to "Review queue" in the sidebar.

@@ -30,17 +30,12 @@ export async function getDashboard(now: Date = new Date()) {
         submittedAt: true,
         createdAt: true,
         verificationTag: true,
-        round: {
+        round: { select: { order: true, name: true } },
+        drive: {
           select: {
-            order: true,
-            name: true,
-            drive: {
-              select: {
-                ...driveTitleSelect,
-                rounds: {
-                  select: { _count: { select: { shortlistUploads: true } } },
-                },
-              },
+            ...driveTitleSelect,
+            rounds: {
+              select: { _count: { select: { shortlistUploads: true } } },
             },
           },
         },
@@ -138,7 +133,7 @@ export async function getDashboard(now: Date = new Date()) {
   };
   const queue = new Map<string, QueueRow>();
   for (const s of pending) {
-    const d = s.round.drive;
+    const d = s.drive;
     const sent = s.submittedAt ?? s.createdAt;
     const row = queue.get(d.id) ?? {
       driveId: d.id,
@@ -156,8 +151,9 @@ export async function getDashboard(now: Date = new Date()) {
     if (s.verificationTag === "LIKELY") row.likely++;
     if (s.verificationTag === "NOT_FOUND") row.notFound++;
     if (sent < row.oldest) row.oldest = sent;
-    if (!row.rounds.some((r) => r.order === s.round.order)) {
-      row.rounds.push({ order: s.round.order, name: s.round.name });
+    const round = s.round;
+    if (round && !row.rounds.some((r) => r.order === round.order)) {
+      row.rounds.push({ order: round.order, name: round.name });
     }
     queue.set(d.id, row);
   }

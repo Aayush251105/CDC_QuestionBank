@@ -12,7 +12,7 @@ const cell = (v: string) =>
 
 // A09 "Export CSV": the questions matching the current filters, with their
 // full text. This is the only way questions leave the site (CLAUDE.md
-// 2a.10), so it is admin only.
+// 2a.14), so it is admin only.
 export async function GET(req: Request) {
   await requireAdmin();
   const params = Object.fromEntries(new URL(req.url).searchParams);

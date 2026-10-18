@@ -24,6 +24,7 @@
   --color-published-bg: #e3f1e7;
   --color-published-fg: #23683a;
   --color-unpublished-bg: #efefef;
+  --color-disabled: #d4d4d3; /* disabled buttons, steps not reached */
 
   --font-sans: var(--font-dm-sans), sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
@@ -99,7 +100,7 @@
     @apply text-xs font-bold tracking-[0.08em] text-ink-3 uppercase;
   }
   .btn-primary {
-    @apply inline-flex min-h-11.5 cursor-pointer items-center justify-center gap-2 border border-crimson bg-crimson px-5.5 text-[15px] font-bold text-white no-underline hover:border-crimson-dark hover:bg-crimson-dark hover:text-white;
+    @apply inline-flex min-h-11.5 cursor-pointer items-center justify-center gap-2 border border-crimson bg-crimson px-5.5 text-[15px] font-bold text-white no-underline hover:border-crimson-dark hover:bg-crimson-dark hover:text-white disabled:cursor-not-allowed disabled:border-disabled disabled:bg-disabled disabled:text-ink-2;
   }
   .btn-secondary {
     @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 border border-charcoal bg-transparent px-4 text-sm font-bold text-charcoal no-underline hover:bg-charcoal hover:text-white;
@@ -118,5 +119,14 @@
 @layer components {
   .field {
     @apply min-h-13 w-full border border-line-strong bg-white px-4 text-[17px] text-charcoal focus:border-charcoal focus:shadow-[0_0_0_1px_var(--color-charcoal)] focus:outline-none;
+  }
+}
+
+/* Code shows exactly what was typed: "<=" stays two characters. */
+@layer base {
+  code,
+  pre,
+  .font-mono {
+    font-variant-ligatures: none;
   }
 }

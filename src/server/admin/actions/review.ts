@@ -59,7 +59,7 @@ export async function saveReview(
 ): Promise<{ error: string | null }> {
   const admin = await requireAdmin();
   const sub = await db.submission.findFirst({
-    where: { ...pendingReview, id: submissionId, round: { driveId } },
+    where: { ...pendingReview, id: submissionId, driveId },
     select: { rawQuestions: { select: { id: true } } },
   });
   if (!sub) return { error: "This submission has already been reviewed." };
@@ -106,7 +106,7 @@ export async function saveReview(
 
   if (goNext) {
     const next = await db.submission.findFirst({
-      where: { ...pendingReview, round: { driveId } },
+      where: { ...pendingReview, driveId },
       orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }],
       select: { id: true },
     });

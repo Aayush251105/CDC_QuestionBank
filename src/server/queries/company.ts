@@ -31,6 +31,7 @@ export async function getCompanyDetail(slug: string) {
           eligibility: true,
           status: true,
           rounds: {
+            where: { verified: true },
             orderBy: { order: "asc" },
             select: {
               id: true,

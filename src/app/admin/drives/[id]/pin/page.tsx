@@ -230,7 +230,9 @@ async function DrivePin({
                                   .join(" · ") || u.email}
                               </div>
                             </td>
-                            <td className={table.td}>{s.round.name}</td>
+                            <td className={table.td}>
+                              {s.round?.name ?? "Round not picked yet"}
+                            </td>
                             <td className={`${table.td} text-sm text-ink-3`}>
                               {age.endsWith("days") ? `${age} ago` : age}
                             </td>

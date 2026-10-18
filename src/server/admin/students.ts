@@ -78,16 +78,12 @@ export async function getStudent(id: string) {
           verificationTag: true,
           submittedAt: true,
           createdAt: true,
-          round: {
+          round: { select: { name: true } },
+          drive: {
             select: {
-              name: true,
-              drive: {
-                select: {
-                  ...driveTitleSelect,
-                  verified: true,
-                  requirePin: true,
-                },
-              },
+              ...driveTitleSelect,
+              verified: true,
+              requirePin: true,
             },
           },
           rawQuestions: { select: { decision: true } },
@@ -100,13 +96,13 @@ export async function getStudent(id: string) {
     id: s.id,
     status: s.status,
     viaPin: s.enteredWithPin,
-    olderDrive: !s.round.drive.requirePin,
+    olderDrive: !s.drive.requirePin,
     tag: s.verificationTag,
     sent: s.submittedAt ?? s.createdAt,
-    round: s.round.name,
-    driveId: s.round.drive.id,
-    drive: driveTitle(s.round.drive),
-    request: !s.round.drive.verified,
+    round: s.round?.name ?? "Round not picked yet",
+    driveId: s.drive.id,
+    drive: driveTitle(s.drive),
+    request: !s.drive.verified,
   }));
   return {
     ...student,

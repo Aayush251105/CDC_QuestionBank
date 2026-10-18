@@ -15,7 +15,7 @@ const BCC_BATCH = 50;
 
 // A06 "Email reminder": one email (students in BCC) to everyone on the
 // round's shortlist who has not submitted yet. Can be sent again any time;
-// students drop off the list once they submit (CLAUDE.md 2a.11).
+// students drop off the list once they submit (CLAUDE.md 2a.15).
 export async function sendReminders(
   driveId: string,
   roundId: string,

@@ -35,7 +35,7 @@ export async function declineDriveRequest(driveId: string) {
     });
     const closed = await tx.submission.updateMany({
       where: {
-        round: { driveId: drive.id },
+        driveId: drive.id,
         status: { in: ["PENDING_REVIEW", "PROCESSING"] },
       },
       data: {
@@ -276,11 +276,18 @@ export async function createDrive(
           if (clash) continue;
           await tx.submission.update({
             where: { id: s.id },
-            data: { roundId: to.id },
+            data: { roundId: to.id, driveId: drive.id },
           });
           moved++;
         }
       }
+      // Submissions still on the request (no round picked, or a round the
+      // new drive does not have) move to the new drive without a round.
+      const rest = await tx.submission.updateMany({
+        where: { driveId: request.id },
+        data: { driveId: drive.id, roundId: null },
+      });
+      moved += rest.count;
       await tx.drive.update({
         where: { id: request.id },
         data: { requestResolvedAt: new Date() },

@@ -1,56 +1,106 @@
 import { describe, expect, it } from "vitest";
-import { duplicateGroups, normaliseTitle, reviewNotes } from "./review";
+import {
+  countUnclear,
+  optionsText,
+  parseOptions,
+  parseReviewQuestions,
+  parseTopics,
+  studentCanEdit,
+  submissionRef,
+} from "./review";
 
-describe("duplicateGroups", () => {
-  it("normalises titles", () => {
-    expect(normaliseTitle("  Design an LRU-cache! ")).toBe(
-      "design an lru cache",
+describe("studentCanEdit", () => {
+  it("allows drafts and pending ones the CDC has not started", () => {
+    expect(studentCanEdit({ status: "DRAFT", reviewStartedAt: null })).toBe(
+      true,
     );
-  });
-
-  it("groups the same title from several submissions or a published question", () => {
-    const groups = duplicateGroups([
-      { title: "Design an LRU cache", roundName: "Tech 1", submissionId: "s1" },
-      { title: "design an LRU cache", roundName: "Tech 1", submissionId: "s2" },
-      { title: "Truck capacity", roundName: "OA", submissionId: "s3" },
-      { title: "Truck capacity", roundName: "OA", submissionId: null },
-      { title: "Only once", roundName: "OA", submissionId: "s4" },
-      { title: "Published twice", roundName: "OA", submissionId: null },
-      { title: "Published twice", roundName: "OA", submissionId: null },
-    ]);
-    expect(groups.map((g) => [g.title, g.senders, g.published])).toEqual([
-      ["Design an LRU cache", 2, 0],
-      ["Truck capacity", 1, 1],
-    ]);
-    expect(groups[0].firstSubmissionId).toBe("s1");
+    expect(
+      studentCanEdit({ status: "PENDING_REVIEW", reviewStartedAt: null }),
+    ).toBe(true);
+    expect(
+      studentCanEdit({
+        status: "PENDING_REVIEW",
+        reviewStartedAt: new Date(),
+      }),
+    ).toBe(false);
+    expect(studentCanEdit({ status: "PUBLISHED", reviewStartedAt: null })).toBe(
+      false,
+    );
   });
 });
 
-describe("reviewNotes", () => {
-  it("lists what needs a look", () => {
+describe("parseOptions", () => {
+  it("reads one option per line and gives keys again", () => {
     expect(
-      reviewNotes({
-        tag: "NOT_FOUND",
-        roundOrder: 2,
-        duplicates: 2,
-        unclear: 0,
-      }),
-    ).toBe("Duplicate of 2 others · Not on round 2 shortlist");
-    expect(
-      reviewNotes({
-        tag: "VERIFIED",
-        roundOrder: 1,
-        duplicates: 0,
-        unclear: 1,
-      }),
-    ).toBe("1 part marked [unclear]");
-    expect(
-      reviewNotes({
-        tag: "VERIFIED",
-        roundOrder: 1,
-        duplicates: 0,
-        unclear: 0,
-      }),
-    ).toBe("None");
+      parseOptions("A. Escalate\n\nb) talk to them\n(c) do it\nwait"),
+    ).toEqual([
+      { key: "A", text: "Escalate" },
+      { key: "B", text: "talk to them" },
+      { key: "C", text: "do it" },
+      { key: "D", text: "wait" },
+    ]);
+  });
+
+  it("round-trips with optionsText", () => {
+    const opts = [
+      { key: "A", text: "O(n)" },
+      { key: "B", text: "O(1)" },
+    ];
+    expect(parseOptions(optionsText(opts))).toEqual(opts);
+    expect(optionsText(null)).toBe("");
+  });
+});
+
+describe("parseTopics", () => {
+  it("splits on commas, trims and drops repeats", () => {
+    expect(parseTopics(" Graphs, BFS ,graphs,, ")).toEqual(["Graphs", "BFS"]);
+    expect(parseTopics("a,b,c,d,e,f,g")).toHaveLength(5);
+  });
+});
+
+describe("countUnclear", () => {
+  it("counts markers", () => {
+    expect(countUnclear("within D [unclear] days [UNCLEAR]")).toBe(2);
+    expect(countUnclear("all clear")).toBe(0);
+  });
+});
+
+describe("parseReviewQuestions", () => {
+  it("keeps valid fields and fixes bad ones", () => {
+    const out = parseReviewQuestions([
+      {
+        id: "q1",
+        type: "MCQ",
+        difficulty: "EASY",
+        cleaned: "  Pick one  ",
+        options: "a) yes\nb) no",
+        topics: "Work style",
+      },
+      { id: "q2", type: "PARTY", difficulty: "?", cleaned: "x" },
+      { type: "SQL" },
+      "junk",
+    ]);
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual({
+      id: "q1",
+      type: "MCQ",
+      difficulty: "EASY",
+      cleaned: "Pick one",
+      options: [
+        { key: "A", text: "yes" },
+        { key: "B", text: "no" },
+      ],
+      topics: ["Work style"],
+    });
+    expect(out[1]).toMatchObject({ type: "CODING", difficulty: "MEDIUM" });
+    expect(parseReviewQuestions("nope")).toEqual([]);
+  });
+});
+
+describe("submissionRef", () => {
+  it("uses the year and the end of the id", () => {
+    expect(submissionRef("cmvc9r1zj002wg4qyiqxg2zfi", 2025)).toBe(
+      "SUB-2025-XG2ZFI",
+    );
   });
 });

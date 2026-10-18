@@ -52,24 +52,28 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 1. **Two ways into Submit OA (S1).**
    - **With a PIN:** the drive already exists, so the student does not fill in drive details. They pick which role in that drive they sat for, then go to round details (S2) as designed.
    - **Drive not listed:** if the CDC has not added the drive, the student creates it themselves (company, year, role and the other drive details). It is saved as an **unverified** drive. Later the admin sees these entries, creates or picks the real drive, attaches the entries they want and publishes. The admin side comes later, but the schema must allow a submission on an unverified, student-created drive.
-2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails** (one exception, 2a.11): drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
+2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails** (one exception, 2a.15): drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
 3. **Request a correction** (00b, Published row): later phase. Do not build it now.
 4. **No view counts and no visit dates.** Drop "Visiting campus this month" (Home), "Visiting since" (Company detail) and "Views on them" (Profile). Every other number shown on Sign in and Home must come from real data, not placeholders.
 5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
 6. **Drive PINs are exactly 6 digits**, no letters or hyphens, shown in the UI as two groups of three boxes (`[][][] [][][]`). A PIN works only while its drive is **open** and the admin has the PIN **switched on** (`pinEnabled`); a closed drive never accepts its PIN. The admin on/off toggle is built in the admin phase. The rule lives in one place: `pinOpensDrive()` in `src/lib/pin.ts`.
 7. **Interim sign-in: Google, until SNU IT registers the app in Microsoft Entra ID.** This temporarily relaxes "Microsoft SSO only" in section 2. Only Google accounts whose `@snu.edu.in` email Google has **verified** get in (checked on the server). No email + password login. The Microsoft provider stays in the code and turns on when its keys are in `.env`; once the SNU tenant id is set, the server also checks `tid`. Without a tenant id, production refuses Microsoft sign-ins unless `ALLOW_ANY_MICROSOFT_TENANT=true`. The rules live in `checkAccount()` in `src/lib/access.ts`. The dev login (`DEV_LOGIN=true`, `pnpm dev` only) is unchanged.
 8. **A drive is one company visit, with all its roles.** Normally one drive per company per year; if a company comes back the same year, the second visit is a separate drive (`sequence` 2) shown as "2025 · A" / "2025 · B", with its own PIN, and URL segment `2025-b` (the first visit always keeps `2025`). A drive lists every role it hires for; a round can be limited to some roles (`Round.roles`, empty = all roles). With a PIN the student picks their role, and S2 then offers only that role's rounds. **Pages show one role at a time**: when a year has more than one role, Company detail shows a role bar (`?role=sde-i`, default the first role, no combined "all roles" view) and lists only that role's rounds (shared rounds appear under every role), numbered 01, 02 for that role; "Most asked" follows the role. Helpers: `src/lib/drives.ts` (`rolesOf`, `pickRole`, `roundIsFor`, `driveIsFor`).
-9. **Admin portal is in scope**, built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (A00a page map, A00b PIN workflow, A01 to A14) under `/admin`, every page and action behind `requireRole("ADMIN", "SUPER_ADMIN")` (A13 super admin only). Where those designs differ from this log, this log wins:
+9. **The AI does the classifying, not the student** (2026-10-18). S3 is one page, "Add the questions": one large box for everything the student remembers (rough notes, any order) and/or photos of their sheets. The AI splits it into questions, picks each type, tidies the wording (never meaning or numbers), pulls out MCQ options, and suggests topics and difficulty; S4 is where the student checks and fixes. No per-type forms. S2 keeps sections as optional. **Photos only** for now (JPG/PNG/WebP, downscaled in the browser); PDF later via pdf.js in the browser if needed.
+10. **AI provider: Groq** (free API) instead of Claude, until decided otherwise (2026-10-18). OpenAI-compatible endpoint, called with `fetch` (no SDK). Text model `AI_MODEL` (default `openai/gpt-oss-120b`, strict JSON schema output); photos `AI_VISION_MODEL` (default `qwen/qwen3.8-27b`, a preview model, max 3 images per request, no PDF). Key in `GROQ_API_KEY`. Question text and photos are sent to Groq; the photos are never stored by us.
+11. **The AI writes each question out properly, not just spell-checks it** (2026-10-18). Photos are transcribed in full; the structuring step then finds the real question and leaves out exam instructions (how to submit, time allowed, "write your name", marking, platform text). Each question is written so a student who never saw the test can understand and attempt it: coding gets a statement, input and output format, constraints and a worked example; SQL gets the table schema; design and written questions get the scenario and the parts to answer. The student's facts, numbers, examples and options are never changed, answer options are never invented, and no solutions are written. Every part the AI wrote itself is listed in `aiAdded` (kept in `RawQuestion.fields`) and shown as an **AI added** tag on S4 so the student checks it. This replaces "cleanup fixes grammar and formatting only" in section 7.
+12. **Notifications (in-app only, never email)** (2026-10-18). When the CDC finishes a review the student gets one neutral notice, "Your <company> <year> <round> submission has been reviewed", linking to S6, with the same wording whatever the outcome (this settles the open point in 2a.2). Other kinds, created by the admin side or a scheduled check later: `FOLLOWED_COMPANY` (new questions for a company the student follows), `DRAFT_REMINDER` (an unfinished draft on an open drive) and `ANNOUNCEMENT` (a CDC message to all students). The student side builds the bell count, the list and read state now.
+13. **Admin portal is in scope**, built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (A00a page map, A00b PIN workflow, A01 to A14) under `/admin`, every page and action behind `requireRole("ADMIN", "SUPER_ADMIN")` (A13 super admin only). Where those designs differ from this log, this log wins:
    - PINs stay **6 digits** (2a.6), not the designs' 6 letters and digits (`K7Q-4MX`). The admin side shows a PIN as Expired after the drive's `closesAt` (`pinState()` in `src/lib/admin.ts`); the student-side check `pinOpensDrive()` is unchanged.
-   - The admin portal does not change student pages or student code.
-   - **No emails** (2a.2) except the reminders in 2a.11: no "Email to the shortlist", no "Email the new PIN" on regenerate, no Email templates section. The PIN page keeps "Copy message".
+   - **No emails** (2a.2) except the reminders in 2a.15: no "Email to the shortlist", no "Email the new PIN" on regenerate, no Email templates section. The PIN page keeps "Copy message".
    - **No view counts** (2a.4): no Views column on A09, no "Most viewed" lists on A12.
    - Students still see only "In review" / "Reviewed" and one neutral wrong-PIN message, whatever A00b says.
    - Sign-in tenant and email domains stay in env; A13 shows them read-only.
    - Drive reports (A12) are CSV only; a PDF needs a new dependency, so ask first.
    - A "drive request" (A02 Requests) is a student-created unverified drive (2a.1).
-10. **Students cannot copy questions out of the site.** On student pages `CopyGuard` (mounted in `SiteShell`) blocks copy, cut, right-click, dragging text and Ctrl+P, and the `.no-copy` class in `globals.css` turns off text selection outside form fields and prints a blank page. Admin pages are not restricted. The only way to download questions is the admin-only Export CSV on A09 Questions. Do not add "copy" buttons for question text, code or sample input anywhere. This is a deterrent: screenshots and photos cannot be stopped by a website.
-11. **Reminder emails, the one exception to "no emails"** (Aayush, 2026-10-18). On a drive's Shortlist page an admin can email shortlisted students who have not submitted for a round yet ("please share your questions"), as often as needed; students drop off the list once they submit. Sent from the CDC's Gmail (`GMAIL_USER`, `GMAIL_APP_PASSWORD` app password) through `src/server/mail.ts`, the only file that sends email, with students in BCC. Each send is stored in `EmailReminder` and the audit log. Manual only: no automatic or scheduled sending. Never email anything about a review outcome.
+14. **Students cannot copy questions out of the site.** On student pages `CopyGuard` (mounted in `SiteShell`) blocks copy, cut, right-click, dragging text and Ctrl+P, and the `.no-copy` class in `globals.css` turns off text selection outside form fields and prints a blank page. Admin pages are not restricted. The only way to download questions is the admin-only Export CSV on A09 Questions. Do not add "copy" buttons for question text, code or sample input anywhere. This is a deterrent: screenshots and photos cannot be stopped by a website.
+15. **Reminder emails, the one exception to "no emails"** (Aayush, 2026-10-18). On a drive's Shortlist page an admin can email shortlisted students who have not submitted for a round yet ("please share your questions"), as often as needed; students drop off the list once they submit. Sent from the CDC's Gmail (`GMAIL_USER`, `GMAIL_APP_PASSWORD` app password) through `src/server/mail.ts`, the only file that sends email, with students in BCC. Each send is stored in `EmailReminder` and the audit log. Manual only: no automatic or scheduled sending. Never email anything about a review outcome.
+
 
 ---
 
@@ -81,7 +85,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 | Styling   | Tailwind CSS with the design tokens in section 5; shadcn/ui only as a base, restyled to match (square corners, no shadows)     |
 | Auth      | Auth.js (`next-auth` v5) with the Microsoft Entra ID provider, issuer limited to the SNU tenant                                |
 | Database  | PostgreSQL via Prisma; Postgres full-text search for `/search`                                                                 |
-| AI        | One server module `src/server/ai/` wrapping a vision-capable LLM API (Claude by default) for scan reading, cleanup and tagging |
+| AI        | One server module `src/server/ai/` wrapping a vision-capable LLM API (Groq for now, 2a.10) for scan reading, cleanup and tagging |
 | Tests     | Vitest for logic, Playwright for the main flows                                                                                |
 | Packaging | Vercel for now; Docker later, only when asked (section 2a)                                                                      |
 
@@ -228,19 +232,21 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
   - Check the PIN on the server with `pinOpensDrive()` (open drive and PIN switched on); keep digits only, so spaces and hyphens typed between the groups are ignored. A wrong, switched-off or closed-drive PIN shows one neutral message ("This PIN is not valid for an open drive. Check it with the CDC."), never which part was wrong.
   - Rate-limit PIN attempts per student (e.g. 5 per 15 minutes) and log failed attempts for admins.
   - The PIN only opens the drive; it does not replace sign-in or the one-submission-per-round rule. Shortlist matching still happens on the admin side.
-  - S1 offers the PIN and a "Drive not listed" path where the student creates an unverified drive (section 2a). With a PIN the student only picks their role in that drive. The S1 design file is being updated; build from it when it lands.
+  - S1 offers the PIN and a "Drive not listed" path where the student creates an unverified drive (section 2a). With a PIN the student only picks their role in that drive. S1 is built from these decisions (6 digit boxes, role choice, unlisted-drive form, at most 3 student-created drives a day); if a new S1 design file lands, match it.
+  - A draft belongs to a drive from S1 (`Submission.driveId`); the round is picked in S2 from the drive's rounds for the chosen role. "My round is not listed" creates an unverified round (`Round.verified = false`, `createdById`). Unverified drives, rounds and companies never appear in browse pages, search or counts (`visibleRound` / `visibleQuestion` in `src/server/queries/visibility.ts`).
 - Closed drive: submitting is switched off and the page explains it with a link to Help.
-- S3a: fields per type (coding: statement, constraints, sample I/O; MCQ: options; aptitude; SQL; written). Plain textarea with code blocks, no rich-text toolbar.
-- S3b: images or PDF, max 10 pages and 15 MB per upload, plus a daily cap per student. Downscale photos in the browser first. The server reads pages one by one in the request (no queue), shows Reading → Done per page, stores the text, drops the bytes. Unreadable pages get "Could not read" with retake or type options.
-- AI prompt rules: transcribe exactly, split into questions, keep code and maths formatting, mark unreadable parts `[unclear]` instead of guessing; cleanup fixes grammar and formatting only, never meaning or numbers; suggest type, topic tags and difficulty. Store original and cleaned text.
+- S3 (one page, 2a.9): a free-text box (autosaved) and photos. Plain textarea, no rich-text toolbar.
+- Photos: images only for now (2a.9), max 10 pages and 15 MB per upload, plus a daily cap per student. Downscale photos in the browser first. The server reads pages one by one in the request (no queue), shows Reading → Done per page, stores the text, drops the bytes. Unreadable pages get "Could not read" with retake or type options.
+- AI prompt rules: transcribe photos exactly and in full, keep code and maths formatting, mark unreadable parts `[unclear]` instead of guessing; then split into questions, drop exam instructions, and write each question out completely (2a.11), never changing the student's numbers or facts and listing AI-written parts in `aiAdded`; suggest type, topic tags and difficulty. Store original and cleaned text.
+- Groq's strict JSON mode cuts the vision model's text at about 500 characters, so photo reading asks for plain text (`chatText`); the text model's strict JSON is fine.
 - S4: student's text beside the cleaned text, editable; honour statement required: "I sat this test and these questions are from it."; credit opt-in.
 - S6: status timeline, the questions sent, Edit and Withdraw (with confirm) while pending.
 
 **AI module**
 
-- Every LLM call goes through `src/server/ai/` (read scan page, clean text, suggest tags). Read the key and model from env (`ANTHROPIC_API_KEY`, `AI_MODEL`). Log token usage per call. No other file calls an LLM SDK directly.
-- When writing this module, check the current Anthropic API docs for the model ID and the image input format instead of relying on memory.
-- If `ANTHROPIC_API_KEY` is missing, fall back to a stub that returns the input text unchanged so the flow works locally.
+- Every LLM call goes through `src/server/ai/` (read scan page, clean text, suggest tags). Read the key and models from env (`GROQ_API_KEY`, `AI_MODEL`, `AI_VISION_MODEL`). Log token usage per call. No other file calls an LLM SDK directly.
+- When changing this module, check the provider's current docs for model IDs and the image input format instead of relying on memory.
+- If `GROQ_API_KEY` is missing, fall back to a stub that returns the input text unchanged so the flow works locally.
 
 **Admin side**
 
@@ -309,11 +315,15 @@ AUTH_MICROSOFT_ENTRA_ID_SECRET=
 AUTH_MICROSOFT_ENTRA_ID_TENANT_ID=
 ALLOWED_EMAIL_DOMAINS=snu.edu.in
 DEV_LOGIN=false
-ANTHROPIC_API_KEY=
-AI_MODEL=
+GROQ_API_KEY=
+AI_MODEL=openai/gpt-oss-120b
+AI_VISION_MODEL=qwen/qwen3.8-27b
 UPLOAD_MAX_PAGES=10
 UPLOAD_MAX_MB=15
-UPLOAD_DAILY_CAP=
+UPLOAD_DAILY_CAP=30
+CDC_CONTACT_EMAIL=
+CDC_OFFICE=
+CDC_OFFICE_HOURS=
 ```
 
 The SNU email domain(s) and tenant are still to be confirmed by the CDC; keep them in env, never hard-coded.

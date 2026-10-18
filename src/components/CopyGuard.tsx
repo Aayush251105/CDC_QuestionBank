@@ -6,7 +6,7 @@ const isField = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
   Boolean(el.closest("input, textarea, select, [contenteditable='true']"));
 
-// Students must not copy questions out of the site (CLAUDE.md 2a.10); only
+// Students must not copy questions out of the site (CLAUDE.md 2a.14); only
 // admins can take them out, through Export CSV. Mounted by the student
 // SiteShell only, so admin pages are not affected. It stops copy, cut,
 // right-click, dragging text out and Ctrl+P; the .no-copy class in

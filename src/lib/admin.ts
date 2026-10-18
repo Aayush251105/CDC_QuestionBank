@@ -175,7 +175,7 @@ export const BLOCK_REASONS = [
   "Other",
 ];
 
-// ---------- Reminder emails (A06, CLAUDE.md 2a.11) ----------
+// ---------- Reminder emails (A06, CLAUDE.md 2a.15) ----------
 
 // The ready-made "please share your questions" email. The admin can edit
 // it before sending. It never mentions review outcomes.

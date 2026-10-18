@@ -1,7 +1,7 @@
 import "server-only";
 import nodemailer, { type Transporter } from "nodemailer";
 
-// The only place the app sends email (CLAUDE.md 2a.11): reminders to
+// The only place the app sends email (CLAUDE.md 2a.15): reminders to
 // shortlisted students to share their questions, sent from the CDC's Gmail
 // with an app password. Never used for review outcomes (2a.2).
 

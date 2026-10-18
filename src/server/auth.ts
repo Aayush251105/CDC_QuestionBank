@@ -125,6 +125,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, account, profile }) {
       if (!account) return token;
 
+      token.provider = account.provider; // shown on the Profile page
       if (account.provider === "dev-login") {
         token.uid = user.id;
         return token;
@@ -146,6 +147,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     session({ session, token }) {
       if (token.uid) session.user.id = token.uid;
+      session.user.provider = token.provider;
       return session;
     },
   },

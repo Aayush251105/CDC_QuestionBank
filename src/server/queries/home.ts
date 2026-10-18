@@ -72,6 +72,7 @@ export async function getOpenDrives(limit = 4) {
       roles: true,
       company: { select: { name: true, slug: true } },
       rounds: {
+        where: { verified: true },
         select: { _count: { select: { questions: { where: liveQuestion } } } },
       },
     },
@@ -115,6 +116,7 @@ export async function getFollowedCompanies(userId: string) {
             where: visibleDrive,
             select: {
               rounds: {
+                where: { verified: true },
                 select: {
                   _count: {
                     select: {

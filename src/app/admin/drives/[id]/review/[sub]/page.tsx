@@ -85,8 +85,8 @@ async function ReviewSubmission({
         }
         eyebrow={
           waiting && s.position
-            ? `Submission ${s.position} of ${s.queueSize} · ${s.round.name}`
-            : s.round.name
+            ? `Submission ${s.position} of ${s.queueSize} · ${s.round?.name ?? ""}`
+            : (s.round?.name ?? "Round not picked yet")
         }
         title={`${u.name} · ${s.questions.length} ${s.questions.length === 1 ? "question" : "questions"}`}
         actions={

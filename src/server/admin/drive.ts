@@ -27,7 +27,7 @@ export const getDriveHeader = cache(async (id: string) => {
   });
   if (!drive) notFound();
   const pending = await db.submission.count({
-    where: { ...pendingReview, round: { driveId: id } },
+    where: { ...pendingReview, driveId: id },
   });
   return {
     ...drive,

@@ -106,7 +106,7 @@ async function Round({ params, searchParams }: Props) {
           <h1 className="text-[34px] leading-[1.1] font-bold sm:text-[42px]">
             {round.name}
           </h1>
-          <dl className="mt-2 grid grid-cols-2 border-t border-[#D4D4D3] sm:grid-cols-4">
+          <dl className="mt-2 grid grid-cols-2 border-t border-disabled sm:grid-cols-4">
             {[
               ["Date", fullDate(round.date)],
               ["Platform", round.platform ?? "Not shared yet"],

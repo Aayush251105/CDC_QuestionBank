@@ -1,6 +1,6 @@
 import "server-only";
 import { notFound } from "next/navigation";
-import { normaliseTitle } from "@/lib/review";
+import { normaliseTitle } from "@/lib/adminReview";
 import { db } from "@/server/db";
 import { pendingReview } from "./queries";
 
@@ -17,7 +17,7 @@ export async function getSubmissionReview(
   submissionId: string,
 ) {
   const sub = await db.submission.findFirst({
-    where: { id: submissionId, round: { driveId, drive: { verified: true } } },
+    where: { id: submissionId, driveId, drive: { verified: true } },
     select: {
       id: true,
       userId: true,
@@ -39,14 +39,8 @@ export async function getSubmissionReview(
           gradYear: true,
         },
       },
-      round: {
-        select: {
-          id: true,
-          order: true,
-          name: true,
-          drive: { select: { companyId: true } },
-        },
-      },
+      round: { select: { id: true, order: true, name: true } },
+      drive: { select: { companyId: true } },
       _count: { select: { scanPages: true } },
       rawQuestions: {
         orderBy: { order: "asc" },
@@ -70,7 +64,7 @@ export async function getSubmissionReview(
   const [shortlist, otherSubs, queue, candidates, pendingTitles, tags] =
     await Promise.all([
       db.shortlistUpload.findFirst({
-        where: { roundId: sub.round.id },
+        where: { roundId: sub.round?.id ?? "" },
         orderBy: { createdAt: "desc" },
         select: {
           entries: {
@@ -88,7 +82,7 @@ export async function getSubmissionReview(
         },
       }),
       db.submission.findMany({
-        where: { ...pendingReview, round: { driveId } },
+        where: { ...pendingReview, driveId },
         orderBy: [{ submittedAt: "asc" }, { createdAt: "asc" }],
         select: { id: true },
       }),
@@ -97,7 +91,7 @@ export async function getSubmissionReview(
       db.question.findMany({
         where: {
           unpublishedAt: null,
-          round: { drive: { companyId: sub.round.drive.companyId } },
+          round: { drive: { companyId: sub.drive.companyId } },
         },
         orderBy: { publishedAt: "desc" },
         select: {
@@ -118,7 +112,7 @@ export async function getSubmissionReview(
           submission: {
             ...pendingReview,
             id: { not: sub.id },
-            round: { driveId },
+            driveId,
           },
         },
         select: { title: true, textOriginal: true },
@@ -151,11 +145,13 @@ export async function getSubmissionReview(
   return {
     ...sub,
     questions,
-    shortlistNote: !shortlist
-      ? "No shortlist uploaded for this round yet"
-      : entry
-        ? `Row ${entry.rowNo} of the round ${sub.round.order} list, ${matchedOn[entry.match]}`
-        : `Not on the round ${sub.round.order} list`,
+    shortlistNote: !sub.round
+      ? "The student has not picked the round yet"
+      : !shortlist
+        ? "No shortlist uploaded for this round yet"
+        : entry
+          ? `Row ${entry.rowNo} of the round ${sub.round.order} list, ${matchedOn[entry.match]}`
+          : `Not on the round ${sub.round.order} list`,
     otherSubs,
     position: position >= 0 ? position + 1 : null,
     queueSize: queue.length,
