@@ -11,6 +11,21 @@ const ACTIONS: Record<string, { tag: string; tone: AuditTone; verb: string }> =
     unpublish: { tag: "Unpublished", tone: "muted", verb: "unpublished" },
     republish: { tag: "Republished", tone: "good", verb: "republished" },
     question_edit: { tag: "Edited", tone: "draft", verb: "edited" },
+    company_create: {
+      tag: "Company added",
+      tone: "good",
+      verb: "added the company",
+    },
+    company_edit: {
+      tag: "Company edited",
+      tone: "draft",
+      verb: "edited the company",
+    },
+    company_merge: {
+      tag: "Company merged",
+      tone: "pending",
+      verb: "merged the company",
+    },
     drive_create: {
       tag: "Drive created",
       tone: "dark",

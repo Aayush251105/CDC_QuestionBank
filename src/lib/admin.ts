@@ -125,3 +125,38 @@ export function pinState(
   }
   return "Active";
 }
+
+// ---------- Companies (A10) ----------
+
+const words = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+// "Possible duplicate of Amazon": for each company, another one whose name
+// is the start of its name ("Amazon Web Services" / "Amazon"), or that
+// shares a name or alias with it. The admin decides whether to merge.
+export function possibleDuplicates(
+  companies: { id: string; name: string; aliases: string[] }[],
+): Map<string, string> {
+  const result = new Map<string, string>(); // id -> name of the likely original
+  for (const c of companies) {
+    const name = words(c.name);
+    const mine = new Set([name, ...c.aliases.map(words)]);
+    for (const other of companies) {
+      if (other.id === c.id) continue;
+      const otherName = words(other.name);
+      const theirs = [otherName, ...other.aliases.map(words)];
+      const prefix = name.startsWith(`${otherName} `);
+      const shared = theirs.some((t) => t && mine.has(t));
+      // Report the shorter name as the original, so only one row is flagged.
+      if (prefix || (shared && otherName.length < name.length)) {
+        result.set(c.id, other.name);
+        break;
+      }
+    }
+  }
+  return result;
+}

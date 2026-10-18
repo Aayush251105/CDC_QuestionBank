@@ -6,6 +6,7 @@ import {
   driveTitle,
   parseDateInput,
   pinState,
+  possibleDuplicates,
   roundNames,
   seasonOf,
   toDateInput,
@@ -114,5 +115,24 @@ describe("pinState", () => {
     expect(
       pinState({ ...active, closesAt: new Date("2025-08-01T00:00:00Z") }, now),
     ).toBe("Expired");
+  });
+});
+
+describe("possibleDuplicates", () => {
+  it("flags the longer of two similar company names", () => {
+    const flags = possibleDuplicates([
+      { id: "a", name: "Amazon", aliases: ["AMZN"] },
+      { id: "b", name: "Amazon Web Services", aliases: ["AWS"] },
+      { id: "c", name: "Deloitte", aliases: [] },
+      { id: "d", name: "Deloitte USI", aliases: [] },
+      { id: "e", name: "Goldman Sachs", aliases: ["GS"] },
+      { id: "f", name: "GS Group", aliases: ["GS"] },
+      { id: "g", name: "Microsoft", aliases: [] },
+    ]);
+    expect(flags.get("b")).toBe("Amazon");
+    expect(flags.get("d")).toBe("Deloitte");
+    expect(flags.get("e")).toBe("GS Group");
+    expect(flags.has("a")).toBe(false);
+    expect(flags.has("g")).toBe(false);
   });
 });
