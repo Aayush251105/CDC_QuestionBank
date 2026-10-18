@@ -160,3 +160,13 @@ export function possibleDuplicates(
   }
   return result;
 }
+
+// ---------- Students (A11) ----------
+
+// Why a student was blocked; kept in the audit log, never shown to them.
+export const BLOCK_REASONS = [
+  "Shared questions outside SNU",
+  "Submitted for drives they did not sit",
+  "Abusive content",
+  "Other",
+];
