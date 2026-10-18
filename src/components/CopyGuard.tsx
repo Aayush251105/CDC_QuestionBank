@@ -6,11 +6,12 @@ const isField = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
   Boolean(el.closest("input, textarea, select, [contenteditable='true']"));
 
-// Questions must not be copied out of the site, by students or admins
-// (CLAUDE.md 2a.10). Admins get questions only through Export CSV. This
-// stops copy, cut, right-click, dragging text out and Ctrl+P; globals.css
-// turns off text selection and printing. It is a deterrent: no website can
-// stop screenshots or photos of the screen.
+// Students must not copy questions out of the site (CLAUDE.md 2a.10); only
+// admins can take them out, through Export CSV. Mounted by the student
+// SiteShell only, so admin pages are not affected. It stops copy, cut,
+// right-click, dragging text out and Ctrl+P; the .no-copy class in
+// globals.css turns off text selection and printing. It is a deterrent: no
+// website can stop screenshots or photos of the screen.
 export function CopyGuard() {
   useEffect(() => {
     const block = (e: Event) => e.preventDefault();

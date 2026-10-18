@@ -1,12 +1,15 @@
+import { CopyGuard } from "@/components/CopyGuard";
 import { ToastProvider } from "@/components/Toast";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 
 // Header, main and footer for every student page, and for the 404 / 403 pages.
+// Students cannot copy or print questions here (CLAUDE.md 2a.10).
 export function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <ToastProvider>
-      <div className="flex min-h-screen flex-col">
+      <CopyGuard />
+      <div className="no-copy flex min-h-screen flex-col">
         <SiteHeader />
         <main id="main" className="flex flex-auto flex-col">
           {children}
