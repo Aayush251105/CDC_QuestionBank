@@ -21,6 +21,34 @@ export const pinTone: Record<PinState, TagTone> = {
   Expired: "muted",
 };
 
+// Admin-only submission labels. Students never see these (CLAUDE.md 2a.2).
+export const submissionTag: Record<
+  | "DRAFT"
+  | "PROCESSING"
+  | "PENDING_REVIEW"
+  | "PUBLISHED"
+  | "NOT_PUBLISHED"
+  | "WITHDRAWN",
+  { label: string; tone: TagTone }
+> = {
+  DRAFT: { label: "Draft", tone: "draft" },
+  PROCESSING: { label: "Processing", tone: "dark" },
+  PENDING_REVIEW: { label: "Pending review", tone: "pending" },
+  PUBLISHED: { label: "Published", tone: "good" },
+  NOT_PUBLISHED: { label: "Not published", tone: "muted" },
+  WITHDRAWN: { label: "Withdrawn", tone: "draft" },
+};
+
+// Shortlist check on a submission (admin only).
+export const checkTag: Record<
+  "VERIFIED" | "LIKELY" | "NOT_FOUND",
+  { label: string; tone: TagTone }
+> = {
+  VERIFIED: { label: "Verified", tone: "good" },
+  LIKELY: { label: "Likely", tone: "pending" },
+  NOT_FOUND: { label: "Not found", tone: "dark" },
+};
+
 export function Tag({
   tone,
   children,

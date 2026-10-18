@@ -8,10 +8,11 @@ import {
   roundNames,
   type RoundTypeKey,
 } from "@/lib/admin";
-import { formatPin, generatePin } from "@/lib/pin";
+import { formatPin } from "@/lib/pin";
 import { slugify } from "@/lib/slug";
 import { logAction } from "@/server/admin/audit";
 import { requireAdmin } from "@/server/admin/guard";
+import { freshPin } from "@/server/admin/pin";
 import { db } from "@/server/db";
 
 // A02 Requests > Decline. The request leaves the list and its submissions
@@ -96,20 +97,6 @@ function parseRounds(json: string): RoundInput[] | null {
     });
   }
   return rounds;
-}
-
-// A PIN no other drive has. Six digits give a million options, so a clash
-// is rare; try a few times.
-async function freshPin() {
-  for (let i = 0; i < 10; i++) {
-    const pin = generatePin();
-    const taken = await db.drive.findUnique({
-      where: { submissionPin: pin },
-      select: { id: true },
-    });
-    if (!taken) return pin;
-  }
-  throw new Error("Could not find a free PIN");
 }
 
 // Creates a drive with its rounds. "Save as draft", or a drive without
