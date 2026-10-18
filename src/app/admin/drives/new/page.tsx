@@ -6,7 +6,7 @@ import { PageHead } from "@/components/admin/ui";
 import { toDateInput, type RoundTypeKey } from "@/lib/admin";
 import { requireAdmin } from "@/server/admin/guard";
 import { db } from "@/server/db";
-import { DriveForm, type DriveFormValues } from "./DriveForm";
+import { DriveForm, type DriveFormValues } from "@/components/admin/DriveForm";
 
 export const metadata: Metadata = {
   title: "New drive · Admin · Placement Question Bank",
@@ -113,6 +113,7 @@ async function NewDrive({
         </p>
       )}
       <DriveForm
+        mode="create"
         initial={initial}
         companies={companies.map((c) => c.name)}
         years={[thisYear - 1, thisYear, thisYear + 1]}

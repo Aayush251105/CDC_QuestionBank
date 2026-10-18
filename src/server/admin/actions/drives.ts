@@ -67,6 +67,7 @@ export type DriveFormState = { error: string | null };
 const ROUND_TYPES: RoundTypeKey[] = ["OA", "TECHNICAL", "HR", "GD"];
 
 type RoundInput = {
+  id: string | null; // set for a round that already exists (edit form)
   type: RoundTypeKey;
   date: Date | null;
   platform: string | null;
@@ -87,6 +88,7 @@ function parseRounds(json: string): RoundInput[] | null {
     if (!ROUND_TYPES.includes(type)) return null;
     const minutes = Number(r.durationMin);
     rounds.push({
+      id: typeof r.id === "string" && r.id ? r.id : null,
       type,
       date: parseDateInput(String(r.date ?? "")),
       platform: String(r.platform ?? "").trim() || null,
@@ -309,4 +311,175 @@ export async function createDrive(
   });
 
   redirect(pin ? `/admin/drives/${driveId}/pin` : `/admin/drives/${driveId}`);
+}
+
+// ---------- A04 Drive detail: edit, open and close ----------
+
+// Saves the Edit drive form. Company and year stay fixed. Existing rounds
+// keep their URL (slug) even when renamed; a round that already has
+// submissions, questions or a shortlist cannot be removed.
+export async function updateDrive(
+  _prev: DriveFormState,
+  form: FormData,
+): Promise<DriveFormState> {
+  const admin = await requireAdmin();
+  const text = (key: string) => String(form.get(key) ?? "").trim();
+  const drive = await db.drive.findFirst({
+    where: { id: text("driveId"), verified: true },
+    select: {
+      id: true,
+      year: true,
+      status: true,
+      company: { select: { name: true } },
+      rounds: {
+        select: {
+          id: true,
+          order: true,
+          slug: true,
+          name: true,
+          _count: {
+            select: {
+              submissions: true,
+              questions: true,
+              shortlistUploads: true,
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!drive) return { error: "This drive no longer exists." };
+
+  const roles = text("roles")
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean);
+  if (roles.length === 0) return { error: "Add at least one role." };
+  const rounds = parseRounds(text("rounds"));
+  if (!rounds) return { error: "Check the rounds and try again." };
+  if (rounds.length === 0 && drive.status === "OPEN") {
+    return { error: "An open drive needs at least one round." };
+  }
+
+  const keep = new Set(rounds.flatMap((r) => (r.id ? [r.id] : [])));
+  const removed = drive.rounds.filter((r) => !keep.has(r.id));
+  const stuck = removed.find(
+    (r) =>
+      r._count.submissions + r._count.questions + r._count.shortlistUploads > 0,
+  );
+  if (stuck) {
+    return {
+      error: `${stuck.name} has submissions, questions or a shortlist, so it cannot be removed.`,
+    };
+  }
+  if (rounds.some((r) => r.id && !drive.rounds.some((x) => x.id === r.id))) {
+    return { error: "Check the rounds and try again." };
+  }
+
+  const opensAt = parseDateInput(text("opensAt"));
+  const closesAt = parseDateInput(text("closesAt"));
+  if (opensAt && closesAt && closesAt < opensAt) {
+    return { error: "The close date is before the open date." };
+  }
+
+  const names = roundNames(rounds.map((r) => r.type));
+  const usedSlugs = new Set(
+    drive.rounds.filter((r) => keep.has(r.id)).map((r) => r.slug),
+  );
+
+  await db.$transaction(async (tx) => {
+    if (removed.length) {
+      await tx.round.deleteMany({
+        where: { id: { in: removed.map((r) => r.id) } },
+      });
+    }
+    // Move kept rounds out of the way so the new order never clashes.
+    await tx.round.updateMany({
+      where: { driveId: drive.id },
+      data: { order: { increment: 1000 } },
+    });
+    for (const [i, r] of rounds.entries()) {
+      const data = {
+        order: i + 1,
+        name: names[i],
+        type: r.type,
+        date: r.date,
+        platform: r.platform,
+        durationMin: r.durationMin,
+      };
+      if (r.id) {
+        await tx.round.update({ where: { id: r.id }, data });
+      } else {
+        let slug = slugify(names[i]);
+        if (usedSlugs.has(slug)) slug = `${slug}-${i + 1}`;
+        usedSlugs.add(slug);
+        await tx.round.create({ data: { ...data, slug, driveId: drive.id } });
+      }
+    }
+    await tx.drive.update({
+      where: { id: drive.id },
+      data: {
+        season: text("season") || null,
+        roles,
+        ctcBand: text("ctcBand") || null,
+        eligibility: text("eligibility") || null,
+        opensAt,
+        closesAt,
+        requirePin: form.get("requirePin") === "on",
+      },
+    });
+    await logAction(
+      {
+        adminId: admin.id,
+        action: "drive_edit",
+        targetType: "drive",
+        targetId: drive.id,
+        driveId: drive.id,
+        summary: `${drive.company.name} ${drive.year}`,
+        detail: `${rounds.length} round(s)${removed.length ? `, ${removed.length} removed` : ""}`,
+      },
+      tx,
+    );
+  });
+
+  redirect(`/admin/drives/${drive.id}`);
+}
+
+// Close drive, Reopen drive, and Open drive for a draft (A04 header).
+// Closing never touches submissions already made (A00b step 6).
+export async function setDriveStatus(
+  driveId: string,
+  to: "OPEN" | "CLOSED",
+): Promise<{ error: string | null }> {
+  const admin = await requireAdmin();
+  const drive = await db.drive.findFirst({
+    where: { id: driveId, verified: true },
+    select: {
+      id: true,
+      year: true,
+      status: true,
+      company: { select: { name: true } },
+      _count: { select: { rounds: true } },
+    },
+  });
+  if (!drive || drive.status === to) return { error: null };
+  if (to === "OPEN" && drive._count.rounds === 0) {
+    return { error: "Add at least one round before opening the drive." };
+  }
+  await db.$transaction(async (tx) => {
+    await tx.drive.update({ where: { id: drive.id }, data: { status: to } });
+    await logAction(
+      {
+        adminId: admin.id,
+        action: to === "OPEN" ? "drive_open" : "drive_close",
+        targetType: "drive",
+        targetId: drive.id,
+        driveId: drive.id,
+        summary: `${drive.company.name} ${drive.year}`,
+      },
+      tx,
+    );
+  });
+  refresh();
+  return { error: null };
 }

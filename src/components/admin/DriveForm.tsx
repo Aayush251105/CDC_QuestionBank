@@ -10,10 +10,13 @@ import {
 } from "@/lib/admin";
 import {
   createDrive,
+  updateDrive,
   type DriveFormState,
 } from "@/server/admin/actions/drives";
 
 export type RoundRow = {
+  id?: string; // existing round (edit form)
+  locked?: boolean; // has submissions, questions or a shortlist: cannot be removed
   type: RoundTypeKey;
   date: string;
   platform: string;
@@ -21,10 +24,17 @@ export type RoundRow = {
 };
 
 export type DriveFormValues = {
+  driveId?: string; // edit form
   requestId: string | null;
   company: string;
   year: number;
+  season?: string;
   roles: string;
+  ctcBand?: string;
+  eligibility?: string;
+  opensAt?: string;
+  closesAt?: string;
+  requirePin?: boolean;
   rounds: RoundRow[];
 };
 
@@ -48,22 +58,26 @@ function Legend({ n, children }: { n: number; children: string }) {
   );
 }
 
-// A03 form. Rounds are edited here and sent as JSON in one hidden field.
+// A03 New drive and A04 Edit drive. Rounds are edited here and sent as
+// JSON in one hidden field. When editing, company and year are fixed.
 export function DriveForm({
+  mode,
   initial,
-  companies,
-  years,
+  companies = [],
+  years = [],
 }: {
+  mode: "create" | "edit";
   initial: DriveFormValues;
-  companies: string[];
-  years: number[];
+  companies?: string[];
+  years?: number[];
 }) {
+  const editing = mode === "edit";
   const [state, action, pending] = useActionState<DriveFormState, FormData>(
-    createDrive,
+    editing ? updateDrive : createDrive,
     { error: null },
   );
   const [rounds, setRounds] = useState<RoundRow[]>(initial.rounds);
-  const [requirePin, setRequirePin] = useState(true);
+  const [requirePin, setRequirePin] = useState(initial.requirePin ?? true);
   const [generate, setGenerate] = useState(true);
 
   const closeHint = defaultCloseDate(rounds.map((r) => parseDateInput(r.date)));
@@ -82,6 +96,9 @@ export function DriveForm({
       }}
       className="flex max-w-230 flex-col gap-9 px-5 pt-7 pb-12 sm:px-8"
     >
+      {initial.driveId && (
+        <input type="hidden" name="driveId" value={initial.driveId} />
+      )}
       {initial.requestId && (
         <input type="hidden" name="requestId" value={initial.requestId} />
       )}
@@ -99,46 +116,65 @@ export function DriveForm({
       <fieldset className="flex flex-col gap-4">
         <Legend n={1}>Company and year</Legend>
         <div className="grid gap-4 sm:grid-cols-4">
-          <div className="flex flex-col gap-1.5 sm:col-span-2">
-            <label htmlFor="d-co" className="lbl">
-              Company
-            </label>
-            <input
-              id="d-co"
-              name="company"
-              list="d-companies"
-              required
-              defaultValue={initial.company}
-              autoComplete="off"
-              className={field}
-            />
-            <datalist id="d-companies">
-              {companies.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-            <span className="text-[13px] text-ink-3">
-              Not in the list?{" "}
-              <Link href="/admin/companies">Add a company</Link>
-            </span>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="d-yr" className="lbl">
-              Year
-            </label>
-            <select
-              id="d-yr"
-              name="year"
-              defaultValue={initial.year}
-              className={field}
-            >
-              {[...new Set([...years, initial.year])].sort().map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
+          {editing ? (
+            <>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="lbl">Company</span>
+                <span className="flex min-h-11 items-center font-bold">
+                  {initial.company}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <span className="lbl">Year</span>
+                <span className="flex min-h-11 items-center font-bold">
+                  {initial.year}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-1.5 sm:col-span-2">
+                <label htmlFor="d-co" className="lbl">
+                  Company
+                </label>
+                <input
+                  id="d-co"
+                  name="company"
+                  list="d-companies"
+                  required
+                  defaultValue={initial.company}
+                  autoComplete="off"
+                  className={field}
+                />
+                <datalist id="d-companies">
+                  {companies.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+                <span className="text-[13px] text-ink-3">
+                  Not in the list?{" "}
+                  <Link href="/admin/companies">Add a company</Link>
+                </span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="d-yr" className="lbl">
+                  Year
+                </label>
+                <select
+                  id="d-yr"
+                  name="year"
+                  defaultValue={initial.year}
+                  className={field}
+                >
+                  {[...new Set([...years, initial.year])].sort().map((y) => (
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="d-se" className="lbl">
               Season
@@ -146,7 +182,7 @@ export function DriveForm({
             <select
               id="d-se"
               name="season"
-              defaultValue="Internship"
+              defaultValue={initial.season ?? "Internship"}
               className={field}
             >
               <option>Internship</option>
@@ -182,6 +218,7 @@ export function DriveForm({
             <input
               id="d-ctc"
               name="ctcBand"
+              defaultValue={initial.ctcBand}
               placeholder="e.g. B"
               className={field}
             />
@@ -193,6 +230,7 @@ export function DriveForm({
             <input
               id="d-el"
               name="eligibility"
+              defaultValue={initial.eligibility}
               placeholder="2026, 2027"
               className={field}
             />
@@ -200,11 +238,11 @@ export function DriveForm({
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3">
+      <fieldset id="rounds" className="flex scroll-mt-4 flex-col gap-3">
         <Legend n={3}>Rounds</Legend>
         {rounds.length === 0 ? (
           <p className="text-ink-3">
-            No rounds yet. The drive is saved as a draft until it has one.
+            No rounds yet. The drive stays a draft until it has one.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -289,10 +327,16 @@ export function DriveForm({
                       <button
                         type="button"
                         aria-label={`Remove round ${i + 1}`}
+                        disabled={r.locked}
+                        title={
+                          r.locked
+                            ? "Has submissions, questions or a shortlist"
+                            : undefined
+                        }
                         onClick={() =>
                           setRounds((rs) => rs.filter((_, j) => j !== i))
                         }
-                        className="btn-secondary min-h-9 px-3"
+                        className="btn-secondary min-h-9 px-3 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Remove
                       </button>
@@ -324,7 +368,13 @@ export function DriveForm({
             <label htmlFor="d-wf" className="lbl">
               Open from
             </label>
-            <input id="d-wf" name="opensAt" type="date" className={field} />
+            <input
+              id="d-wf"
+              name="opensAt"
+              type="date"
+              defaultValue={initial.opensAt}
+              className={field}
+            />
             <span className="text-[13px] text-ink-3">
               Empty: the first round&apos;s date
             </span>
@@ -333,7 +383,13 @@ export function DriveForm({
             <label htmlFor="d-wt" className="lbl">
               Close on
             </label>
-            <input id="d-wt" name="closesAt" type="date" className={field} />
+            <input
+              id="d-wt"
+              name="closesAt"
+              type="date"
+              defaultValue={initial.closesAt}
+              className={field}
+            />
             <span className="text-[13px] text-ink-3">
               Default: 14 days after the last round
               {closeHint ? ` (${toDateInput(closeHint)})` : ""}
@@ -368,7 +424,7 @@ export function DriveForm({
             />
           </button>
         </div>
-        {requirePin && (
+        {requirePin && !editing && (
           <label className="flex cursor-pointer items-start gap-3 text-[15px]">
             <input
               type="checkbox"
@@ -386,29 +442,38 @@ export function DriveForm({
       </fieldset>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-charcoal pt-5">
-        <Link href="/admin/drives" className="btn-secondary">
+        <Link
+          href={editing ? `/admin/drives/${initial.driveId}` : "/admin/drives"}
+          className="btn-secondary"
+        >
           Cancel
         </Link>
-        <span className="flex flex-wrap gap-2.5">
-          <button
-            type="submit"
-            name="intent"
-            value="draft"
-            disabled={pending}
-            className="btn-secondary"
-          >
-            Save as draft
+        {editing ? (
+          <button type="submit" disabled={pending} className="btn-primary">
+            {pending ? "Saving…" : "Save changes"}
           </button>
-          <button
-            type="submit"
-            name="intent"
-            value="create"
-            disabled={pending}
-            className="btn-primary"
-          >
-            {pending ? "Saving…" : "Create drive"}
-          </button>
-        </span>
+        ) : (
+          <span className="flex flex-wrap gap-2.5">
+            <button
+              type="submit"
+              name="intent"
+              value="draft"
+              disabled={pending}
+              className="btn-secondary"
+            >
+              Save as draft
+            </button>
+            <button
+              type="submit"
+              name="intent"
+              value="create"
+              disabled={pending}
+              className="btn-primary"
+            >
+              {pending ? "Saving…" : "Create drive"}
+            </button>
+          </span>
+        )}
       </div>
     </form>
   );
