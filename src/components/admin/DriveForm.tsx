@@ -65,11 +65,13 @@ export function DriveForm({
   initial,
   companies = [],
   years = [],
+  windowDays = 14,
 }: {
   mode: "create" | "edit";
   initial: DriveFormValues;
   companies?: string[];
   years?: number[];
+  windowDays?: number; // A13 "PIN works for, after the last round"
 }) {
   const editing = mode === "edit";
   const [state, action, pending] = useActionState<DriveFormState, FormData>(
@@ -80,7 +82,10 @@ export function DriveForm({
   const [requirePin, setRequirePin] = useState(initial.requirePin ?? true);
   const [generate, setGenerate] = useState(true);
 
-  const closeHint = defaultCloseDate(rounds.map((r) => parseDateInput(r.date)));
+  const closeHint = defaultCloseDate(
+    rounds.map((r) => parseDateInput(r.date)),
+    windowDays,
+  );
   const setRound = (i: number, patch: Partial<RoundRow>) =>
     setRounds((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
@@ -391,7 +396,7 @@ export function DriveForm({
               className={field}
             />
             <span className="text-[13px] text-ink-3">
-              Default: 14 days after the last round
+              Default: {windowDays} days after the last round
               {closeHint ? ` (${toDateInput(closeHint)})` : ""}
             </span>
           </div>

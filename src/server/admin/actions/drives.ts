@@ -13,6 +13,7 @@ import { slugify } from "@/lib/slug";
 import { logAction } from "@/server/admin/audit";
 import { requireAdmin } from "@/server/admin/guard";
 import { freshPin } from "@/server/admin/pin";
+import { getSettings } from "@/server/admin/settings";
 import { db } from "@/server/db";
 
 // A02 Requests > Decline. The request leaves the list and its submissions
@@ -168,7 +169,10 @@ export async function createDrive(
     (roundTimes.length ? new Date(Math.min(...roundTimes)) : null);
   const closesAt =
     parseDateInput(text("closesAt")) ??
-    defaultCloseDate(rounds.map((r) => r.date));
+    defaultCloseDate(
+      rounds.map((r) => r.date),
+      (await getSettings()).pinWindowDays,
+    );
   if (opensAt && closesAt && closesAt < opensAt) {
     return { error: "The close date is before the open date." };
   }

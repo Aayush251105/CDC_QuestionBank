@@ -84,12 +84,16 @@ export function roundNames(types: RoundTypeKey[]): string[] {
   });
 }
 
-// Default end of the submission window: 14 days after the last round (A00b).
-export function defaultCloseDate(roundDates: (Date | null)[]): Date | null {
+// Default end of the submission window: some days after the last round
+// (A00b: 14 by default; a super admin can change it in A13).
+export function defaultCloseDate(
+  roundDates: (Date | null)[],
+  days = 14,
+): Date | null {
   const times = roundDates
     .filter((d): d is Date => d !== null)
     .map((d) => d.getTime());
-  return times.length ? new Date(Math.max(...times) + 14 * DAY) : null;
+  return times.length ? new Date(Math.max(...times) + days * DAY) : null;
 }
 
 // "2025-08-14" from an <input type="date"> -> UTC midnight, or null.

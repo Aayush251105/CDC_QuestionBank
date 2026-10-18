@@ -5,6 +5,7 @@ import { SkeletonRows } from "@/components/Skeleton";
 import { PageHead } from "@/components/admin/ui";
 import { toDateInput, type RoundTypeKey } from "@/lib/admin";
 import { requireAdmin } from "@/server/admin/guard";
+import { getSettings } from "@/server/admin/settings";
 import { db } from "@/server/db";
 import { DriveForm, type DriveFormValues } from "@/components/admin/DriveForm";
 
@@ -52,7 +53,7 @@ async function NewDrive({
   const params = await searchParams;
   const requestId = typeof params.request === "string" ? params.request : null;
 
-  const [companies, request] = await Promise.all([
+  const [companies, request, settings] = await Promise.all([
     db.company.findMany({
       where: { verified: true, mergedIntoId: null },
       orderBy: { name: "asc" },
@@ -79,6 +80,7 @@ async function NewDrive({
           },
         })
       : null,
+    getSettings(),
   ]);
 
   const thisYear = new Date().getUTCFullYear();
@@ -88,6 +90,7 @@ async function NewDrive({
         company: request.company.name,
         year: request.year,
         roles: request.roles.join(", "),
+        requirePin: settings.requirePinDefault,
         rounds: request.rounds.map((r) => ({
           type: r.type as RoundTypeKey,
           date: toDateInput(r.date),
@@ -100,6 +103,7 @@ async function NewDrive({
         company: "",
         year: thisYear,
         roles: "",
+        requirePin: settings.requirePinDefault,
         rounds: [{ type: "OA", date: "", platform: "", durationMin: "" }],
       };
 
@@ -117,6 +121,7 @@ async function NewDrive({
         initial={initial}
         companies={companies.map((c) => c.name)}
         years={[thisYear - 1, thisYear, thisYear + 1]}
+        windowDays={settings.pinWindowDays}
       />
     </>
   );
