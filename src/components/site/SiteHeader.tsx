@@ -63,8 +63,13 @@ async function UserLinks() {
   });
   return (
     <>
-      {/* The notifications page comes with the bell in step 17. */}
-      <Link href="/me/submissions" className={linkClass}>
+      <Link
+        href="/me/notifications"
+        className={linkClass}
+        aria-label={
+          unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
+        }
+      >
         Notifications{unread > 0 ? ` (${unread})` : ""}
       </Link>
       <Link href="/me" className={linkClass}>

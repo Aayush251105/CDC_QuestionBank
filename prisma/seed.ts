@@ -13,6 +13,7 @@ import {
   RoundType,
   SubmissionStatus,
 } from "../src/generated/prisma/client";
+import { reviewedMessage } from "../src/lib/notifications";
 import { formatPin } from "../src/lib/pin";
 import { slugify } from "../src/lib/slug";
 
@@ -1103,7 +1104,12 @@ async function main() {
   await db.notification.create({
     data: {
       userId: aayush,
-      kind: "SUBMISSION_REVIEWED",
+      kind: "REVIEWED",
+      message: reviewedMessage({
+        company: "Amazon",
+        drive: "2025",
+        round: "Online assessment",
+      }),
       link: "/me/submissions",
     },
   });

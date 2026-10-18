@@ -62,6 +62,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 9. **The AI does the classifying, not the student** (2026-10-18). S3 is one page, "Add the questions": one large box for everything the student remembers (rough notes, any order) and/or photos of their sheets. The AI splits it into questions, picks each type, tidies the wording (never meaning or numbers), pulls out MCQ options, and suggests topics and difficulty; S4 is where the student checks and fixes. No per-type forms. S2 keeps sections as optional. **Photos only** for now (JPG/PNG/WebP, downscaled in the browser); PDF later via pdf.js in the browser if needed.
 10. **AI provider: Groq** (free API) instead of Claude, until decided otherwise (2026-10-18). OpenAI-compatible endpoint, called with `fetch` (no SDK). Text model `AI_MODEL` (default `openai/gpt-oss-120b`, strict JSON schema output); photos `AI_VISION_MODEL` (default `qwen/qwen3.8-27b`, a preview model, max 3 images per request, no PDF). Key in `GROQ_API_KEY`. Question text and photos are sent to Groq; the photos are never stored by us.
 11. **The AI writes each question out properly, not just spell-checks it** (2026-10-18). Photos are transcribed in full; the structuring step then finds the real question and leaves out exam instructions (how to submit, time allowed, "write your name", marking, platform text). Each question is written so a student who never saw the test can understand and attempt it: coding gets a statement, input and output format, constraints and a worked example; SQL gets the table schema; design and written questions get the scenario and the parts to answer. The student's facts, numbers, examples and options are never changed, answer options are never invented, and no solutions are written. Every part the AI wrote itself is listed in `aiAdded` (kept in `RawQuestion.fields`) and shown as an **AI added** tag on S4 so the student checks it. This replaces "cleanup fixes grammar and formatting only" in section 7.
+12. **Notifications (in-app only, never email)** (2026-10-18). When the CDC finishes a review the student gets one neutral notice, "Your <company> <year> <round> submission has been reviewed", linking to S6, with the same wording whatever the outcome (this settles the open point in 2a.2). Other kinds, created by the admin side or a scheduled check later: `FOLLOWED_COMPANY` (new questions for a company the student follows), `DRAFT_REMINDER` (an unfinished draft on an open drive) and `ANNOUNCEMENT` (a CDC message to all students). The student side builds the bell count, the list and read state now.
 
 ---
 
@@ -303,6 +304,9 @@ AI_VISION_MODEL=qwen/qwen3.8-27b
 UPLOAD_MAX_PAGES=10
 UPLOAD_MAX_MB=15
 UPLOAD_DAILY_CAP=30
+CDC_CONTACT_EMAIL=
+CDC_OFFICE=
+CDC_OFFICE_HOURS=
 ```
 
 The SNU email domain(s) and tenant are still to be confirmed by the CDC; keep them in env, never hard-coded.

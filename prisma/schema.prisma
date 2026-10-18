@@ -373,10 +373,13 @@ model Bookmark {
 }
 
 // In-app only (no emails). Must never reveal a review outcome.
+// In-app only, never email (CLAUDE.md 2a.12). Never reveals a review
+// outcome: REVIEWED has the same wording whatever the CDC decided.
 model Notification {
   id        String    @id @default(cuid())
   userId    String
-  kind      String
+  kind      String // REVIEWED | FOLLOWED_COMPANY | DRAFT_REMINDER | ANNOUNCEMENT (src/lib/notifications.ts)
+  message   String    @default("")
   link      String?
   readAt    DateTime?
   createdAt DateTime  @default(now())
