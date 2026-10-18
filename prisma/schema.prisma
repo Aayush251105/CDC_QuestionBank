@@ -46,6 +46,8 @@ model User {
   shortlistUploads ShortlistUpload[]
   shortlistMatches ShortlistEntry[]
   settingsChanged  Setting[]
+  remindersSent    EmailReminder[]   @relation("ReminderSentBy")
+  remindersGot     EmailReminder[]   @relation("ReminderTo")
 }
 
 // ---------- Companies, drives, rounds ----------
@@ -149,6 +151,7 @@ model Round {
   submissions      Submission[]
   shortlist        ShortlistEntry[]
   shortlistUploads ShortlistUpload[]
+  reminders        EmailReminder[]
 
   @@unique([driveId, slug])
   @@unique([driveId, order])
@@ -459,4 +462,23 @@ model Setting {
   updatedAt   DateTime @updatedAt
 
   updatedBy User? @relation(fields: [updatedById], references: [id])
+}
+
+// "Please share your questions" emails to shortlisted students who have
+// not submitted for a round (CLAUDE.md 2a.11). One row per student per
+// send, so the Shortlist page shows when each was last reminded. Never
+// used for review outcomes.
+model EmailReminder {
+  id       String   @id @default(cuid())
+  roundId  String
+  userId   String? // set when the shortlist row matched an account
+  email    String
+  sentById String
+  sentAt   DateTime @default(now())
+
+  round  Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  user   User? @relation("ReminderTo", fields: [userId], references: [id], onDelete: SetNull)
+  sentBy User  @relation("ReminderSentBy", fields: [sentById], references: [id])
+
+  @@index([roundId, email])
 }

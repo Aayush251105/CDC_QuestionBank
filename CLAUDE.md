@@ -52,7 +52,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 1. **Two ways into Submit OA (S1).**
    - **With a PIN:** the drive already exists, so the student does not fill in drive details. They pick which role in that drive they sat for, then go to round details (S2) as designed.
    - **Drive not listed:** if the CDC has not added the drive, the student creates it themselves (company, year, role and the other drive details). It is saved as an **unverified** drive. Later the admin sees these entries, creates or picks the real drive, attaches the entries they want and publishes. The admin side comes later, but the schema must allow a submission on an unverified, student-created drive.
-2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails at all**: drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
+2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails** (one exception, 2a.11): drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
 3. **Request a correction** (00b, Published row): later phase. Do not build it now.
 4. **No view counts and no visit dates.** Drop "Visiting campus this month" (Home), "Visiting since" (Company detail) and "Views on them" (Profile). Every other number shown on Sign in and Home must come from real data, not placeholders.
 5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
@@ -62,13 +62,14 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 9. **Admin portal is in scope**, built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (A00a page map, A00b PIN workflow, A01 to A14) under `/admin`, every page and action behind `requireRole("ADMIN", "SUPER_ADMIN")` (A13 super admin only). Where those designs differ from this log, this log wins:
    - PINs stay **6 digits** (2a.6), not the designs' 6 letters and digits (`K7Q-4MX`). The admin side shows a PIN as Expired after the drive's `closesAt` (`pinState()` in `src/lib/admin.ts`); the student-side check `pinOpensDrive()` is unchanged.
    - The admin portal does not change student pages or student code.
-   - **No emails** (2a.2): no "Email to the shortlist", no "Email the new PIN" on regenerate, no Email templates section. The PIN page keeps "Copy message".
+   - **No emails** (2a.2) except the reminders in 2a.11: no "Email to the shortlist", no "Email the new PIN" on regenerate, no Email templates section. The PIN page keeps "Copy message".
    - **No view counts** (2a.4): no Views column on A09, no "Most viewed" lists on A12.
    - Students still see only "In review" / "Reviewed" and one neutral wrong-PIN message, whatever A00b says.
    - Sign-in tenant and email domains stay in env; A13 shows them read-only.
    - Drive reports (A12) are CSV only; a PDF needs a new dependency, so ask first.
    - A "drive request" (A02 Requests) is a student-created unverified drive (2a.1).
 10. **Students cannot copy questions out of the site.** On student pages `CopyGuard` (mounted in `SiteShell`) blocks copy, cut, right-click, dragging text and Ctrl+P, and the `.no-copy` class in `globals.css` turns off text selection outside form fields and prints a blank page. Admin pages are not restricted. The only way to download questions is the admin-only Export CSV on A09 Questions. Do not add "copy" buttons for question text, code or sample input anywhere. This is a deterrent: screenshots and photos cannot be stopped by a website.
+11. **Reminder emails, the one exception to "no emails"** (Aayush, 2026-10-18). On a drive's Shortlist page an admin can email shortlisted students who have not submitted for a round yet ("please share your questions"), as often as needed; students drop off the list once they submit. Sent from the CDC's Gmail (`GMAIL_USER`, `GMAIL_APP_PASSWORD` app password) through `src/server/mail.ts`, the only file that sends email, with students in BCC. Each send is stored in `EmailReminder` and the audit log. Manual only: no automatic or scheduled sending. Never email anything about a review outcome.
 
 ---
 

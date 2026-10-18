@@ -7,6 +7,8 @@ import {
   parseDateInput,
   pinState,
   possibleDuplicates,
+  reminderMessage,
+  chunk,
   roundNames,
   seasonOf,
   toDateInput,
@@ -134,5 +136,39 @@ describe("possibleDuplicates", () => {
     expect(flags.get("e")).toBe("GS Group");
     expect(flags.has("a")).toBe(false);
     expect(flags.has("g")).toBe(false);
+  });
+});
+
+describe("reminder emails", () => {
+  it("builds the message with the PIN and close date when given", () => {
+    const m = reminderMessage({
+      drive: "Amazon 2025 SDE intern",
+      round: "Online assessment",
+      site: "https://qb.example",
+      pin: "482 915",
+      until: "30 Sep 2025",
+    });
+    expect(m.subject).toBe(
+      "Reminder: share your Amazon 2025 SDE intern Online assessment questions",
+    );
+    expect(m.text).toContain("Your drive PIN: 482 915");
+    expect(m.text).toContain("Submit here: https://qb.example/submit");
+    expect(m.text).toContain("Submissions close on 30 Sep 2025.");
+  });
+
+  it("leaves the PIN out when there is none", () => {
+    const m = reminderMessage({
+      drive: "D",
+      round: "R",
+      site: "",
+      pin: null,
+      until: null,
+    });
+    expect(m.text).not.toContain("PIN");
+  });
+
+  it("splits recipients into BCC batches", () => {
+    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(chunk([], 50)).toEqual([]);
   });
 });

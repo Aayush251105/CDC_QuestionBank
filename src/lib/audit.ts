@@ -69,6 +69,11 @@ const ACTIONS: Record<string, { tag: string; tone: AuditTone; verb: string }> =
       verb: "switched off the PIN for",
     },
     pin_on: { tag: "PIN on", tone: "good", verb: "switched on the PIN for" },
+    reminder_email: {
+      tag: "Reminder sent",
+      tone: "draft",
+      verb: "emailed a reminder for",
+    },
     shortlist_upload: {
       tag: "Shortlist",
       tone: "draft",
@@ -147,7 +152,10 @@ export const AUDIT_GROUPS = {
     label: "Published questions",
     actions: ["question_edit", "unpublish", "republish"],
   },
-  shortlist: { label: "Shortlists", actions: ["shortlist_upload"] },
+  shortlist: {
+    label: "Shortlists and reminders",
+    actions: ["shortlist_upload", "reminder_email"],
+  },
   drives: {
     label: "Drives and requests",
     actions: [

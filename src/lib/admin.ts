@@ -174,3 +174,39 @@ export const BLOCK_REASONS = [
   "Abusive content",
   "Other",
 ];
+
+// ---------- Reminder emails (A06, CLAUDE.md 2a.11) ----------
+
+// The ready-made "please share your questions" email. The admin can edit
+// it before sending. It never mentions review outcomes.
+export function reminderMessage(m: {
+  drive: string; // "Amazon 2025 SDE intern"
+  round: string; // "Online assessment"
+  site: string; // "https://questions.snu.edu.in"
+  pin: string | null; // "482 915", only while the PIN works
+  until: string | null; // "30 Sep 2025"
+}) {
+  return {
+    subject: `Reminder: share your ${m.drive} ${m.round} questions`,
+    text: [
+      `You were shortlisted for the ${m.round} of the ${m.drive} drive, and we have not received your questions yet.`,
+      "",
+      "Please share the questions you remember on the CDC Placement Question Bank. It takes a few minutes and helps every SNU student who sits this test after you.",
+      "",
+      ...(m.pin ? [`Your drive PIN: ${m.pin}`] : []),
+      `Submit here: ${m.site}/submit`,
+      ...(m.until ? [`Submissions close on ${m.until}.`] : []),
+      "",
+      "You will stop getting these reminders once you have submitted.",
+      "",
+      "Career Development Centre, Shiv Nadar University",
+    ].join("\n"),
+  };
+}
+
+// Split a list into groups of at most `size` (BCC batches).
+export function chunk<T>(list: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
+}
