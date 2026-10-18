@@ -111,6 +111,38 @@ export async function submitForReview(
   redirect(`/submit/${s.id}/done`);
 }
 
+// S6 "Withdraw": only while waiting and before the CDC starts the review.
+// The text is deleted; the round is freed so it can be submitted again
+// (one submission per round). The row stays as WITHDRAWN for the CDC's log.
+export async function withdrawSubmission(submissionId: string) {
+  const user = await requireUser();
+  const done = await db.$transaction(async (tx) => {
+    // The status check and the change are one step, so a review that
+    // starts at the same moment wins.
+    const { count } = await tx.submission.updateMany({
+      where: {
+        id: submissionId,
+        userId: user.id,
+        status: "PENDING_REVIEW",
+        reviewStartedAt: null,
+      },
+      data: {
+        status: "WITHDRAWN",
+        rawText: null,
+        notes: null,
+        roundId: null,
+        credit: false,
+      },
+    });
+    if (count === 0) return false;
+    await tx.rawQuestion.deleteMany({ where: { submissionId } });
+    await tx.scanPage.deleteMany({ where: { submissionId } });
+    return true;
+  });
+  if (!done) return { message: LOCKED };
+  redirect("/me/submissions?withdrawn=1");
+}
+
 // S5 "Add the next round": a new draft on the same drive and role, straight
 // to round details. Reuses an open draft for that drive and role.
 export async function startNextRound(submissionId: string) {
