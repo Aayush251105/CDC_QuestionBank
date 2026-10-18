@@ -68,6 +68,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
    - Sign-in tenant and email domains stay in env; A13 shows them read-only.
    - Drive reports (A12) are CSV only; a PDF needs a new dependency, so ask first.
    - A "drive request" (A02 Requests) is a student-created unverified drive (2a.1).
+10. **Questions cannot be copied out of the site, by students or admins.** `CopyGuard` (root layout) blocks copy, cut, right-click, dragging text and Ctrl+P; `globals.css` turns off text selection outside form fields and prints a blank page. The only way questions leave the site is the admin-only Export CSV on A09 Questions. Do not add "copy" buttons for question text, code or sample input anywhere. This is a deterrent: screenshots and photos cannot be stopped by a website.
 
 ---
 

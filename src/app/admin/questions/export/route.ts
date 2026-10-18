@@ -10,7 +10,9 @@ import { db } from "@/server/db";
 const cell = (v: string) =>
   /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
 
-// A09 "Export CSV": the questions matching the current filters.
+// A09 "Export CSV": the questions matching the current filters, with their
+// full text. This is the only way questions leave the site (CLAUDE.md
+// 2a.10), so it is admin only.
 export async function GET(req: Request) {
   await requireAdmin();
   const params = Object.fromEntries(new URL(req.url).searchParams);
@@ -22,10 +24,11 @@ export async function GET(req: Request) {
   });
 
   const lines = [
-    "Title,Company,Year,Round,Type,Difficulty,Topics,Sent by,Published,Status",
+    "Title,Question text,Company,Year,Round,Type,Difficulty,Topics,Sent by,Published,Status",
     ...rows.map((q) =>
       [
         q.title,
+        q.bodyMarkdown,
         q.round.drive.company.name,
         String(q.round.drive.year),
         q.round.name,
