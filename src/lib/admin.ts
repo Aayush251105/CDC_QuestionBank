@@ -60,6 +60,50 @@ export function seasonOf(now: Date = new Date()) {
   };
 }
 
+// ---------- New drive form (A03) ----------
+
+export type RoundTypeKey = "OA" | "TECHNICAL" | "HR" | "GD";
+
+const roundTypeName: Record<RoundTypeKey, string> = {
+  OA: "Online assessment",
+  TECHNICAL: "Technical interview",
+  HR: "HR interview",
+  GD: "Group discussion",
+};
+
+// Round names from their types, numbered when a type repeats:
+// OA, TECHNICAL, TECHNICAL -> "Online assessment", "Technical interview 1",
+// "Technical interview 2".
+export function roundNames(types: RoundTypeKey[]): string[] {
+  const seen = new Map<RoundTypeKey, number>();
+  return types.map((t) => {
+    const n = (seen.get(t) ?? 0) + 1;
+    seen.set(t, n);
+    const repeats = types.filter((x) => x === t).length > 1;
+    return repeats ? `${roundTypeName[t]} ${n}` : roundTypeName[t];
+  });
+}
+
+// Default end of the submission window: 14 days after the last round (A00b).
+export function defaultCloseDate(roundDates: (Date | null)[]): Date | null {
+  const times = roundDates
+    .filter((d): d is Date => d !== null)
+    .map((d) => d.getTime());
+  return times.length ? new Date(Math.max(...times) + 14 * DAY) : null;
+}
+
+// "2025-08-14" from an <input type="date"> -> UTC midnight, or null.
+export function parseDateInput(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+// UTC midnight -> "2025-08-14" for an <input type="date">.
+export function toDateInput(date: Date | null): string {
+  return date ? date.toISOString().slice(0, 10) : "";
+}
+
 // What the admin PIN tags show (A00b "PIN states"). The submission window is
 // the admin side's view; whether a PIN opens a drive for a student is
 // pinOpensDrive() in src/lib/pin.ts.

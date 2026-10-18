@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { dayMonth, daysAgo, driveTitle, pinState, seasonOf } from "./admin";
+import {
+  dayMonth,
+  daysAgo,
+  defaultCloseDate,
+  driveTitle,
+  parseDateInput,
+  pinState,
+  roundNames,
+  seasonOf,
+  toDateInput,
+} from "./admin";
 
 describe("driveTitle", () => {
   const amazon = { name: "Amazon" };
@@ -48,6 +58,42 @@ describe("dates", () => {
     expect(seasonOf(now).label).toBe("2025–26");
     expect(seasonOf(new Date("2026-03-01T00:00:00Z")).label).toBe("2025–26");
     expect(seasonOf(new Date("2026-07-01T00:00:00Z")).label).toBe("2026–27");
+  });
+});
+
+describe("new drive form", () => {
+  it("names rounds and numbers repeated types", () => {
+    expect(roundNames(["OA", "TECHNICAL", "HR"])).toEqual([
+      "Online assessment",
+      "Technical interview",
+      "HR interview",
+    ]);
+    expect(roundNames(["OA", "TECHNICAL", "TECHNICAL"])).toEqual([
+      "Online assessment",
+      "Technical interview 1",
+      "Technical interview 2",
+    ]);
+  });
+
+  it("closes the window 14 days after the last round", () => {
+    expect(
+      defaultCloseDate([
+        new Date("2025-08-14T00:00:00Z"),
+        null,
+        new Date("2025-08-28T00:00:00Z"),
+      ]),
+    ).toEqual(new Date("2025-09-11T00:00:00Z"));
+    expect(defaultCloseDate([null])).toBeNull();
+  });
+
+  it("reads and writes date inputs", () => {
+    expect(parseDateInput("2025-08-14")).toEqual(
+      new Date("2025-08-14T00:00:00Z"),
+    );
+    expect(parseDateInput("14 Aug 2025")).toBeNull();
+    expect(parseDateInput("")).toBeNull();
+    expect(toDateInput(new Date("2025-08-14T00:00:00Z"))).toBe("2025-08-14");
+    expect(toDateInput(null)).toBe("");
   });
 });
 

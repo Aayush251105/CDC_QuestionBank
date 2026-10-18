@@ -1,6 +1,15 @@
 "use server";
 
 import { refresh } from "next/cache";
+import { redirect } from "next/navigation";
+import {
+  defaultCloseDate,
+  parseDateInput,
+  roundNames,
+  type RoundTypeKey,
+} from "@/lib/admin";
+import { formatPin, generatePin } from "@/lib/pin";
+import { slugify } from "@/lib/slug";
 import { logAction } from "@/server/admin/audit";
 import { requireAdmin } from "@/server/admin/guard";
 import { db } from "@/server/db";
@@ -49,4 +58,255 @@ export async function declineDriveRequest(driveId: string) {
     );
   });
   refresh();
+}
+
+// ---------- A03 New drive ----------
+
+export type DriveFormState = { error: string | null };
+
+const ROUND_TYPES: RoundTypeKey[] = ["OA", "TECHNICAL", "HR", "GD"];
+
+type RoundInput = {
+  type: RoundTypeKey;
+  date: Date | null;
+  platform: string | null;
+  durationMin: number | null;
+};
+
+function parseRounds(json: string): RoundInput[] | null {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json || "[]");
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(raw)) return null;
+  const rounds: RoundInput[] = [];
+  for (const r of raw as Record<string, unknown>[]) {
+    const type = String(r?.type ?? "") as RoundTypeKey;
+    if (!ROUND_TYPES.includes(type)) return null;
+    const minutes = Number(r.durationMin);
+    rounds.push({
+      type,
+      date: parseDateInput(String(r.date ?? "")),
+      platform: String(r.platform ?? "").trim() || null,
+      durationMin: Number.isInteger(minutes) && minutes > 0 ? minutes : null,
+    });
+  }
+  return rounds;
+}
+
+// A PIN no other drive has. Six digits give a million options, so a clash
+// is rare; try a few times.
+async function freshPin() {
+  for (let i = 0; i < 10; i++) {
+    const pin = generatePin();
+    const taken = await db.drive.findUnique({
+      where: { submissionPin: pin },
+      select: { id: true },
+    });
+    if (!taken) return pin;
+  }
+  throw new Error("Could not find a free PIN");
+}
+
+// Creates a drive with its rounds. "Save as draft", or a drive without
+// rounds yet, stays a Draft (A00b step 1). From a drive request, the
+// student's submissions move onto the new drive's rounds, in order.
+export async function createDrive(
+  _prev: DriveFormState,
+  form: FormData,
+): Promise<DriveFormState> {
+  const admin = await requireAdmin();
+  const text = (key: string) => String(form.get(key) ?? "").trim();
+
+  const requestId = text("requestId") || null;
+  const request = requestId
+    ? await db.drive.findFirst({
+        where: { id: requestId, verified: false, requestResolvedAt: null },
+        select: {
+          id: true,
+          company: true,
+          rounds: { orderBy: { order: "asc" }, select: { id: true } },
+        },
+      })
+    : null;
+  if (requestId && !request) {
+    return { error: "This drive request has already been handled." };
+  }
+
+  const companyName = text("company");
+  if (!companyName) return { error: "Pick a company." };
+  let company = await db.company.findFirst({
+    where: {
+      verified: true,
+      mergedIntoId: null,
+      OR: [
+        { name: { equals: companyName, mode: "insensitive" } },
+        { aliases: { has: companyName } },
+      ],
+    },
+  });
+  if (
+    !company &&
+    request &&
+    request.company.name.toLowerCase() === companyName.toLowerCase()
+  ) {
+    company = request.company; // verified below, with the drive
+  }
+  if (!company) {
+    return {
+      error: `"${companyName}" is not in the company list. Add it on the Companies page first.`,
+    };
+  }
+
+  const year = Number(text("year"));
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) {
+    return { error: "Pick a year." };
+  }
+  const roles = text("roles")
+    .split(",")
+    .map((r) => r.trim())
+    .filter(Boolean);
+  if (roles.length === 0) return { error: "Add at least one role." };
+
+  const rounds = parseRounds(text("rounds"));
+  if (!rounds) return { error: "Check the rounds and try again." };
+
+  const roundTimes = rounds.flatMap((r) => (r.date ? [r.date.getTime()] : []));
+  const opensAt =
+    parseDateInput(text("opensAt")) ??
+    (roundTimes.length ? new Date(Math.min(...roundTimes)) : null);
+  const closesAt =
+    parseDateInput(text("closesAt")) ??
+    defaultCloseDate(rounds.map((r) => r.date));
+  if (opensAt && closesAt && closesAt < opensAt) {
+    return { error: "The close date is before the open date." };
+  }
+
+  const requirePin = form.get("requirePin") === "on";
+  const pin =
+    requirePin && form.get("generatePin") === "on" ? await freshPin() : null;
+  const status =
+    text("intent") === "draft" || rounds.length === 0 ? "DRAFT" : "OPEN";
+  const names = roundNames(rounds.map((r) => r.type));
+  const last = await db.drive.aggregate({
+    where: { companyId: company.id, year },
+    _max: { sequence: true },
+  });
+  const { id: companyId, name: companyLabel, verified } = company;
+
+  const driveId = await db.$transaction(async (tx) => {
+    if (!verified) {
+      await tx.company.update({
+        where: { id: companyId },
+        data: { verified: true },
+      });
+    }
+    const drive = await tx.drive.create({
+      data: {
+        companyId,
+        year,
+        sequence: (last._max.sequence ?? 0) + 1,
+        season: text("season") || null,
+        roles,
+        ctcBand: text("ctcBand") || null,
+        eligibility: text("eligibility") || null,
+        status,
+        opensAt,
+        closesAt,
+        requirePin,
+        submissionPin: pin,
+        pinCreatedAt: pin ? new Date() : null,
+        createdById: admin.id,
+        rounds: {
+          create: rounds.map((r, i) => ({
+            order: i + 1,
+            slug: slugify(names[i]),
+            name: names[i],
+            type: r.type,
+            date: r.date,
+            platform: r.platform,
+            durationMin: r.durationMin,
+          })),
+        },
+      },
+      select: {
+        id: true,
+        rounds: { orderBy: { order: "asc" }, select: { id: true } },
+      },
+    });
+    const summary = `${companyLabel} ${year} · ${roles.join(", ")}`;
+    await logAction(
+      {
+        adminId: admin.id,
+        action: "drive_create",
+        targetType: "drive",
+        targetId: drive.id,
+        driveId: drive.id,
+        summary,
+        detail: `${status === "DRAFT" ? "Saved as draft" : "Created"} with ${rounds.length} round(s)`,
+      },
+      tx,
+    );
+    if (pin) {
+      await logAction(
+        {
+          adminId: admin.id,
+          action: "pin_generate",
+          targetType: "drive",
+          targetId: drive.id,
+          driveId: drive.id,
+          summary,
+          detail: `PIN ${formatPin(pin)}`,
+        },
+        tx,
+      );
+    }
+
+    if (request) {
+      // Move the request's submissions round by round. A student who
+      // already has a submission on the target round keeps both apart.
+      let moved = 0;
+      for (const [i, from] of request.rounds.entries()) {
+        const to = drive.rounds[i];
+        if (!to) break;
+        const subs = await tx.submission.findMany({
+          where: { roundId: from.id },
+          select: { id: true, userId: true },
+        });
+        for (const s of subs) {
+          const clash = await tx.submission.findUnique({
+            where: { userId_roundId: { userId: s.userId, roundId: to.id } },
+            select: { id: true },
+          });
+          if (clash) continue;
+          await tx.submission.update({
+            where: { id: s.id },
+            data: { roundId: to.id },
+          });
+          moved++;
+        }
+      }
+      await tx.drive.update({
+        where: { id: request.id },
+        data: { requestResolvedAt: new Date() },
+      });
+      await logAction(
+        {
+          adminId: admin.id,
+          action: "request_attach",
+          targetType: "drive",
+          targetId: request.id,
+          driveId: drive.id,
+          summary,
+          detail: `Drive request turned into this drive; ${moved} submission(s) moved`,
+        },
+        tx,
+      );
+    }
+    return drive.id;
+  });
+
+  redirect(pin ? `/admin/drives/${driveId}/pin` : `/admin/drives/${driveId}`);
 }
