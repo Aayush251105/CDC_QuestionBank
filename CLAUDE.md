@@ -2,7 +2,7 @@
 
 This repo is the web app for the Career Development Centre (CDC) of Shiv Nadar University (SNU). Students who sat a company's online assessment (OA) share the questions; CDC admins verify and approve them; every SNU student can then browse them by company, year, round and topic.
 
-Your job in this repo right now is the **student side of the portal**, built from the designs in `CDC-Student-Portal-Designs/`. The admin portal comes later and is out of scope unless the owner (Aayush) asks for it.
+Your job in this repo is the **student side of the portal**, built from the designs in `CDC-Student-Portal-Designs/`, and the **admin portal** (approved by Aayush, 2026-10-17), built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (see 2a.9).
 
 ---
 
@@ -52,7 +52,7 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 1. **Two ways into Submit OA (S1).**
    - **With a PIN:** the drive already exists, so the student does not fill in drive details. They pick which role in that drive they sat for, then go to round details (S2) as designed.
    - **Drive not listed:** if the CDC has not added the drive, the student creates it themselves (company, year, role and the other drive details). It is saved as an **unverified** drive. Later the admin sees these entries, creates or picks the real drive, attaches the entries they want and publishes. The admin side comes later, but the schema must allow a submission on an unverified, student-created drive.
-2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails at all**: drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
+2. **Students see only "In review" → "Reviewed"** on My submissions and Submission status. Nothing about the outcome (published, not published, merged) or the reason is shown. **No emails** (one exception, 2a.15): drop the Profile "Email me when" section. In-app notifications must not reveal the outcome either (whether a neutral "reviewed" notification is sent is still to confirm).
 3. **Request a correction** (00b, Published row): later phase. Do not build it now.
 4. **No view counts and no visit dates.** Drop "Visiting campus this month" (Home), "Visiting since" (Company detail) and "Views on them" (Profile). Every other number shown on Sign in and Home must come from real data, not placeholders.
 5. **No Docker for now.** Build a plain local app; it will be deployed on **Vercel**. Postgres provider (e.g. Neon) is decided at step 2. Skip `docker-compose.yml` and the Dockerfile until asked.
@@ -63,6 +63,17 @@ Aayush's answers to open questions. Where these differ from later sections or fr
 10. **AI provider: Groq** (free API) instead of Claude, until decided otherwise (2026-10-18). OpenAI-compatible endpoint, called with `fetch` (no SDK). Text model `AI_MODEL` (default `openai/gpt-oss-120b`, strict JSON schema output); photos `AI_VISION_MODEL` (default `qwen/qwen3.8-27b`, a preview model, max 3 images per request, no PDF). Key in `GROQ_API_KEY`. Question text and photos are sent to Groq; the photos are never stored by us.
 11. **The AI writes each question out properly, not just spell-checks it** (2026-10-18). Photos are transcribed in full; the structuring step then finds the real question and leaves out exam instructions (how to submit, time allowed, "write your name", marking, platform text). Each question is written so a student who never saw the test can understand and attempt it: coding gets a statement, input and output format, constraints and a worked example; SQL gets the table schema; design and written questions get the scenario and the parts to answer. The student's facts, numbers, examples and options are never changed, answer options are never invented, and no solutions are written. Every part the AI wrote itself is listed in `aiAdded` (kept in `RawQuestion.fields`) and shown as an **AI added** tag on S4 so the student checks it. This replaces "cleanup fixes grammar and formatting only" in section 7.
 12. **Notifications (in-app only, never email)** (2026-10-18). When the CDC finishes a review the student gets one neutral notice, "Your <company> <year> <round> submission has been reviewed", linking to S6, with the same wording whatever the outcome (this settles the open point in 2a.2). Other kinds, created by the admin side or a scheduled check later: `FOLLOWED_COMPANY` (new questions for a company the student follows), `DRAFT_REMINDER` (an unfinished draft on an open drive) and `ANNOUNCEMENT` (a CDC message to all students). The student side builds the bell count, the list and read state now.
+13. **Admin portal is in scope**, built from `CDC-Portal-Designs/CDC-Portal-Designs/admin/` (A00a page map, A00b PIN workflow, A01 to A14) under `/admin`, every page and action behind `requireRole("ADMIN", "SUPER_ADMIN")` (A13 super admin only). Where those designs differ from this log, this log wins:
+   - PINs stay **6 digits** (2a.6), not the designs' 6 letters and digits (`K7Q-4MX`). The admin side shows a PIN as Expired after the drive's `closesAt` (`pinState()` in `src/lib/admin.ts`); the student-side check `pinOpensDrive()` is unchanged.
+   - **No emails** (2a.2) except the reminders in 2a.15: no "Email to the shortlist", no "Email the new PIN" on regenerate, no Email templates section. The PIN page keeps "Copy message".
+   - **No view counts** (2a.4): no Views column on A09, no "Most viewed" lists on A12.
+   - Students still see only "In review" / "Reviewed" and one neutral wrong-PIN message, whatever A00b says.
+   - Sign-in tenant and email domains stay in env; A13 shows them read-only.
+   - Drive reports (A12) are CSV only; a PDF needs a new dependency, so ask first.
+   - A "drive request" (A02 Requests) is a student-created unverified drive (2a.1).
+14. **Students cannot copy questions out of the site.** On student pages `CopyGuard` (mounted in `SiteShell`) blocks copy, cut, right-click, dragging text and Ctrl+P, and the `.no-copy` class in `globals.css` turns off text selection outside form fields and prints a blank page. Admin pages are not restricted. The only way to download questions is the admin-only Export CSV on A09 Questions. Do not add "copy" buttons for question text, code or sample input anywhere. This is a deterrent: screenshots and photos cannot be stopped by a website.
+15. **Reminder emails, the one exception to "no emails"** (Aayush, 2026-10-18). On a drive's Shortlist page an admin can email shortlisted students who have not submitted for a round yet ("please share your questions"), as often as needed; students drop off the list once they submit. Sent from the CDC's Gmail (`GMAIL_USER`, `GMAIL_APP_PASSWORD` app password) through `src/server/mail.ts`, the only file that sends email, with students in BCC. Each send is stored in `EmailReminder` and the audit log. Manual only: no automatic or scheduled sending. Never email anything about a review outcome.
+
 
 ---
 
@@ -237,9 +248,11 @@ Every migration goes through `prisma migrate dev` with a clear name. Never run `
 - When changing this module, check the provider's current docs for model IDs and the image input format instead of relying on memory.
 - If `GROQ_API_KEY` is missing, fall back to a stub that returns the input text unchanged so the flow works locally.
 
-**Admin side (until it exists)**
+**Admin side**
 
-- Do not build `/admin` pages (they are being designed separately, including PIN generation). To see published content locally, use `prisma/seed.ts` and a small script `pnpm dev:publish <submissionId>` that marks a submission published. Keep `/admin` reserved.
+- Built under `/admin` from the admin designs (2a.9). Every approval, edit, rejection, PIN action, shortlist upload, block and role or setting change writes a `ReviewAction` row (the audit log); rows are never edited or deleted.
+- Shortlist CSVs are read in memory; only their rows are stored (`ShortlistUpload`, `ShortlistEntry`), never the file.
+- Admin actions that change what students see must refresh the `questions` cache tag.
 
 ---
 
@@ -265,6 +278,10 @@ Work in this order. Each numbered item ends with the commit question from sectio
 16. Pages 10 My submissions and S6 Submission status.
 17. Page 13 Help and FAQ, notifications bell.
 18. Playwright tests for sign-in, browse, submit; README; Vercel deploy.
+
+Admin portal (2a.9), same commit question after each item:
+
+A1. Admin schema, migration and seed. A2. Admin shell (sidebar, header, guard) and A01 Dashboard. A3. A02 Drives and drive requests. A4. A03 New and edit drive. A5. A04 Drive detail. A6. A05 Drive PIN. A7. A06 Shortlist upload and matching. A8. A07 Review batch. A9. A08 Review a submission. A10. A09 Questions. A11. A10 Companies. A12. A11 Students and blocking. A13. A12 Analytics and reports. A14. A13 Admins and settings. A15. A14 Audit log and global search. A16. Admin tests and README.
 
 Before saying a page is done: compare it with its design file in a browser at desktop and phone width, run the checks below, and list anything that differs from the design.
 

@@ -165,6 +165,7 @@ const userFields = {
   branch: true,
   gradYear: true,
   creditByDefault: true,
+  blockedAt: true,
 } as const;
 
 // The signed-in user, or null. Cached for the length of one request.
@@ -177,10 +178,12 @@ export const getCurrentUser = cache(async () => {
   return db.user.findUnique({ where: { id }, select: userFields });
 });
 
-// Sends signed-out visitors to /login.
+// Sends signed-out visitors to /login. A student the CDC has blocked
+// (admin A11) gets the 403 page: no browsing, no submitting.
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  if (user.blockedAt) forbidden();
   return user;
 }
 

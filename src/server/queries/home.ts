@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/server/db";
 import { driveLabel } from "@/lib/drives";
-import { visibleDrive, visibleQuestion } from "./visibility";
+import { liveQuestion, visibleDrive, visibleQuestion } from "./visibility";
 
 // Shared questions change only when the CDC publishes, so these are cached
 // for a few minutes. Tagged so the admin side can refresh them on publish.
@@ -73,7 +73,7 @@ export async function getOpenDrives(limit = 4) {
       company: { select: { name: true, slug: true } },
       rounds: {
         where: { verified: true },
-        select: { _count: { select: { questions: true } } },
+        select: { _count: { select: { questions: { where: liveQuestion } } } },
       },
     },
   });
@@ -120,7 +120,12 @@ export async function getFollowedCompanies(userId: string) {
                 select: {
                   _count: {
                     select: {
-                      questions: { where: { publishedAt: { gte: weekAgo } } },
+                      questions: {
+                        where: {
+                          ...liveQuestion,
+                          publishedAt: { gte: weekAgo },
+                        },
+                      },
                     },
                   },
                 },

@@ -56,6 +56,29 @@
   }
 }
 
+/* Student pages: no copying questions (CLAUDE.md 2a.10). Text cannot be
+   selected, except inside form fields, and printing gives a blank page.
+   Admin pages are not affected. */
+.no-copy {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.no-copy :is(input, textarea, select, [contenteditable="true"]) {
+  -webkit-user-select: text;
+  user-select: text;
+}
+@media print {
+  body:has(.no-copy) > * {
+    display: none !important;
+  }
+  body:has(.no-copy)::after {
+    content: "Printing is turned off on the CDC Placement Question Bank.";
+    display: block;
+    padding: 48px;
+    font-size: 18px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

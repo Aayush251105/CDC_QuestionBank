@@ -14,6 +14,13 @@ export const visibleRound = {
   drive: visibleDrive,
 } satisfies Prisma.RoundWhereInput;
 
+// Questions a CDC admin has not unpublished (admin A09). Use it in every
+// question count too.
+export const liveQuestion = {
+  unpublishedAt: null,
+} satisfies Prisma.QuestionWhereInput;
+
 export const visibleQuestion = {
+  ...liveQuestion,
   round: visibleRound,
 } satisfies Prisma.QuestionWhereInput;
